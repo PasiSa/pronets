@@ -22,8 +22,8 @@ The course material contains following sections:
 
 1. [Introduction and basic network tools](intro/)
 1. [Rust basics and client sockets](rust-basics/)
-1. Simple server and Docker containers
-1. Protocol design and project grouping
+1. [Simple server and Docker containers](server/)
+1. [Protocol design and project grouping](protocol/)
 1. Concurrency and asynchronous programming
 1. Testing and observability
 1. Security fundamentals

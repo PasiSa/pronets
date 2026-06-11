@@ -19,6 +19,10 @@
       url: /intro/
     - title: 2. Rust basics
       url: /rust-basics/
+    - title: 3. Server programming
+      url: /server/
+    - title: 4. Protocol design
+      url: /protocol/
 
 - title: Code Examples
   url: /examples/
