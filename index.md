@@ -24,7 +24,7 @@ The course material contains following sections:
 1. [Rust basics and client sockets](rust-basics/)
 1. [Simple server and Docker containers](server/)
 1. [Protocol design and project grouping](protocol/)
-1. Concurrency and asynchronous programming
+1. [Concurrency and asynchronous programming](concurrency/)
 1. Testing and observability
 1. Security fundamentals
 1. UDP and real-time transport
