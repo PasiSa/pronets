@@ -39,8 +39,8 @@ fn main() -> io::Result<()> {
     // Interpret as UTF-8, replacing invalid bytes instead of returning an error.
     // If read causes error, exits the main function
     let mut buf: [u8; 160] = [0; 160];
-    socket.read(&mut buf)?;
-    println!("{}", String::from_utf8_lossy(&buf));
+    let n = socket.read(&mut buf)?;
+    println!("Read {} bytes: {}", n, String::from_utf8_lossy(&buf));
 
     Ok(()) // Everything successful!
 }
