@@ -308,7 +308,11 @@ variations.
 
 There is also a similar example,
 "**[simple-client](https://github.com/PasiSa/pronets/tree/main/examples/simple-client/src/main.rs)**"
-in the course material [git repository](https://github.com/PasiSa/pronets).
+in the "[examples folder](https://github.com/PasiSa/pronets/tree/main/examples)"
+course material git repository. The example contains all needed Rust project
+files to build and try it. One way to test this and other examples is to clone
+the course material repository to your own machine and try it out using normal
+Rust build tools.
 
 ```rust
 // io is used for the io::Result return type. Read and Write bring the
@@ -385,27 +389,116 @@ it.
 
 ## Encoding binary data
 
-Byte order, packing and structures
+Numbers and characters are stored in computer memory as binary data. One byte
+(or octet) consists of 8 bits. It can represent unsigned integer values from 0
+to 255, or signed integer values from -128 to 127.
+
+### Numbers and byte order
+
+Larger integer values, such as 16-bit, 32-bit and 64-bit values, consist of
+multiple bytes. These bytes can be ordered in memory in different ways. In
+**big endian** byte order, the most significant byte is stored first, before the
+less significant bytes. In **little endian** byte order, the least significant
+byte is stored first. Most current desktop and server systems, including x86
+processors and current Apple chips, use little endian byte order internally.
+
+Network protocols normally use big endian byte order for binary integer values.
+For this reason, big endian is also called **network byte order**. The byte
+order used by the local computer is called **host byte order**. Depending on the
+processor architecture, host byte order may be the same as network byte order,
+but on most current systems it is little endian.
+
+When binary integer values are sent over the network, they should therefore be
+converted to network byte order before writing them to the socket. In Rust, the
+integer types provide helper methods for this. For example, `to_be_bytes()`
+converts an integer into a byte array in big endian byte order.
+
+```rust
+use std::io::{self, Write};
+use std::net::TcpStream;
+
+fn send_number(stream: &mut TcpStream, value: u32) -> io::Result<()> {
+    // Convert the 32-bit integer to network byte order, i.e. big endian.
+    let bytes = value.to_be_bytes();
+
+    // Write all four bytes to the TCP connection.
+    stream.write_all(&bytes)?;
+
+    Ok(())
+}
+```
+
+Conversely, when bytes are read from the network, they need to be interpreted
+using the byte order defined by the protocol. If the protocol uses network byte
+order, the received big endian bytes can be converted back into an integer with
+`from_be_bytes()`.
+
+```rust
+use std::io::{self, Read};
+use std::net::TcpStream;
+
+fn receive_number(stream: &mut TcpStream) -> io::Result<u32> {
+    // Read exactly four bytes, because a u32 value consists of four bytes.
+    let mut bytes = [0u8; 4];
+    stream.read_exact(&mut bytes)?;
+
+    // Convert the received network byte order bytes into a u32 value.
+    let value = u32::from_be_bytes(bytes);
+
+    Ok(value)
+}
+```
+
+### Handling data structures
+
+Another issue is padding. When Rust compiles a normal struct, it may insert
+unused bytes between fields so that the CPU can access the fields efficiently.
+These padding bytes are part of the in-memory representation of the struct, but
+they are normally not part of the network protocol message. In addition, the
+structure fields that represent larger than 8-bit numbers need to be converted
+into network byte order.
+
+Our examples folder includes
+"**[tcpheader](https://github.com/PasiSa/pronets/tree/main/examples/tcpheader/src/main.rs)**",
+that converts a TCP header from a structure into standards-compliant byte array
+that can then be written to network, and the opposite function of composing a
+structure based in incoming byte array.
+
+### Text and strings
+
+When strings and text are sent over the network, they must first be converted
+into bytes. For this reason, a protocol specification should define which
+character encoding is used.
+
+Traditionally, many text-based protocols used 7-bit ASCII. ASCII is simple
+because each character fits into one byte, but it only supports a limited set of
+characters. Today, international characters inside the text are common, and
+UTF-8 is often used instead. UTF-8 represents Unicode text as a sequence of
+8-bit bytes, while still keeping ordinary ASCII characters unchanged.
+
+Rust strings are UTF-8 encoded, and Rust provides helper methods for converting
+between strings and byte arrays when data is written to or read from the
+network.
+
+```rust
+use std::io::{self, Write};
+use std::net::TcpStream;
+
+fn send_text(stream: &mut TcpStream, text: &str) -> io::Result<()> {
+    // Rust strings are UTF-8, and as_bytes() returns the encoded bytes.
+    let bytes = text.as_bytes();
+
+    stream.write_all(bytes)?;
+
+    Ok(())
+}
+```
 
 ## HTTP basics
 
 Needed in the first assignment
 
-## Using Git
-
-How to set up Git repository in version.aalto.fi
-
-Setting up ssh keys to the repository
-
-Cloning repository to local machine
-
-Committing changes
-
-Pushing local commits to the server
-
 ## Assignment
-
-_TBD: Set up Git repository for your course work_
 
 Implement a program that opens a TCP socket and connects it to
 "pronets.dice.aalto.fi" port 10000, and writes message `TST (some string)`.
