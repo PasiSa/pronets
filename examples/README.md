@@ -19,4 +19,9 @@ The examples are as follows:
 - **[simple-client](https://github.com/PasiSa/pronets/tree/main/examples/simple-client/src/main.rs)**:
   Opens connection, then writes and reads a bit of data.
 
+- **[tcpheader](https://github.com/PasiSa/pronets/tree/main/examples/tcpheader/src/main.rs)**
+  Example of converting a struct consisting TCP header fields into byte stream
+  that can be written to a socket, and conversely, filling the struct from data
+  read from byte stream.
+
 - _TODO: more examples to follow_
