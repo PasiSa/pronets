@@ -496,28 +496,143 @@ fn send_text(stream: &mut TcpStream, text: &str) -> io::Result<()> {
 
 ## HTTP basics
 
-Needed in the first assignment
+Probably the most common application protocol in today's Internet is the
+**Hypertext Transfer Protocol (HTTP)** that is used for transmitting web content
+of top the TCP protocol, and as a general communication protocol, for example,
+for various applications that use RESTful APIs. HTTP server can be located at
+server port 80 for insecure connection with plaintext messages (readable e.g.
+with Wireshark), or at port 443 (for TLS-encrypted connection, also known as
+HTTPS). In practice these days implementations use practically always the secure
+connection.
+
+HTTP is a request-response protocol, where the HTTP client makes a request
+containing one of the HTTP methods (GET, POST, PUT, etc.), some HTTP headers and
+optionally a body. HTTP server replies with a response that contains a numeric
+status code, and also has a header and a body.
+
+HTTP was developed in 1991 by Tim Berners-Lee and few other researchers at CERN
+(see [their publication](https://dl.acm.org/doi/abs/10.1145/179606.179671)), and
+for majority of that time we have used its text-encoded versions 1.0 and 1.1. In
+early 2010s, [HTTP/2](https://datatracker.ietf.org/doc/html/rfc7540) was
+developed. It introduced few significant changes in how protocol is used,
+paricularly, encoding the HTTP headers in binary format, thus taking less space.
+Later became [HTTP/3](https://datatracker.ietf.org/doc/html/rfc9114) which is
+based on the **QUIC protocol** that runs on top of UDP.
+
+For the purpose of the assignments in this course, we will focus on the
+text-based HTTP version 1, even though it is being phased out as the
+newer versions are deployed, as it is easier to get started with.
+
+A minimal HTTP/1.1 GET request asks the server to return a resource. The empty
+line after the headers marks the end of the request headers.
+
+In HTTP/1.1, each line in the request or response should end with the two-byte
+sequence carriage return and line feed, written as `\r\n` in Rust strings. The
+empty line after the headers is therefore also written as `\r\n`. In program
+code, the request below would end with `\r\n\r\n`: one line ending for the last
+header line, and another line ending for the empty line that terminates the
+header section.
+
+```http
+GET /index.html HTTP/1.1
+Host: example.com
+
+```
+
+A simple HTTP/1.1 response starts with the protocol version, status code and
+status text. The headers are followed by an empty line and then the response
+body. Content-Length tells the length of the body in the response. This is
+needed, so that we know where this response ends and a new one starts. TCP is
+stream-oriented protocol, so the `read` call to the socket does not necessarily
+return a full response.
+
+```http
+HTTP/1.1 200 OK
+Content-Type: text/plain
+Content-Length: 13
+
+Hello, world!
+```
+
+A POST request sends data to the server. In this case we apply JSON encoding in
+the request body to pass different named attributes to the server.
+
+```http
+POST /new-user HTTP/1.1
+Host: example.com
+Content-Type: application/json
+Connection: close
+
+{
+    "name": "Alice",
+    "age": 30,
+    "email": "alice@example.com"
+}
+```
 
 ## Assignment
 
-Implement a program that opens a TCP socket and connects it to
-"pronets.dice.aalto.fi" port 10000, and writes message `TST (some string)`.
-Then the program should read bytes from the socket.
+This assignment consists of multiple parts. First you will implement a simple
+TCP client that connects to "`www.aalto.fi`", port 80 and makes a GET request
+for "`/index.html`". I.e., for this assignment we use plaintext HTTP, even though
+it is strongly discouraged in reality. For this assigment, start a project in
+your Git repository under folder "http-client".
 
-Implement another function to your program that opens a TCP connections to
-"pronets.dice.aalto.fi", port 80, and makes a GET request for `index.html`.
+1. Open Wireshark and capture packets that are destined to UDP port 53 or TCP
+   port 80.
 
-_TBD HTTP POST request_
+2. After your program has successfully established connection to the server,
+   make it stop for user input before sending the actual HTTP request. You can,
+   for example use the `read_line()` function (without processing the input) to
+   do this.
 
-Before you run the program, open Wireshark to analyze the communication that
-happens.
+Here is a simple example:
 
-- Identify DNS query and DNS response. What fields and what values does the
-  query and response have?
+```rust
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input).unwrap();
+```
 
-- Identify TCP connection establishment for the TST exchange. What is the source
-  TCP port that is used? What TCP options are in use in the first packet with
-  SYN flag?
+{:start="3"}
+
+3. Can you locate the DNS request and response. Which type of DNS record does
+   the response have and what does it mean?
+
+4. Identify the TCP connection in Wireshark. What is the source TCP port used
+   for the communication? What TCP options are visible in the initial SYN packet
+
+After you have checked the DNS query and answer, press return and let the
+program run forward, so that it makes the HTTP query and receives the
+response that is printed to the standard output.
+
+{:start="5"}
+
+5. What is the status code in the response and what does it mean? What
+   additional information are the headers telling?
+
+Extend your program with another HTTP request. This time it is a POST request
+that sends some information to the server, which causes it to fetch a Git
+repository. The request should be sent to `pronets.dice.aalto.fi` and then
+endpoint is "`/fetch-git`". We still use port 80 at server. You don't need to
+analyze Wireshark from this point on, but keeping it open does not harm.
+
+The POST request body should be JSON formatted (use Content-Type
+`application/json`, as in example above), and it should have the following
+keys:
+
+- **"username"**: The username you want to use with the server. This should be
+  the username you declared earlier.
+- **"git-repo"**: The URL of the Git repository you are using for your course
+  assignments and project.
+
+{:start="6"}
+
+6. Print the response that the server returns to the request. Note that the
+   processing the request may take a short while, because the server actually
+   tries to clone your repo (but deletes the local copy immediately after that).
+   Was request succesful according to response? If not, tell also that in your
+   report, but try to fix the situation. Note that you should have at least one
+   commit in your Git repo, so that the server can fetch it.
 
 Finally, answer the following questions:
 
@@ -527,5 +642,3 @@ Finally, answer the following questions:
 
 - What tools did you use? In particular, if you used AI assistants, tell how did
   you use then and if they were helpful.
-
-_TBD..._
