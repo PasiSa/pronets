@@ -10,6 +10,8 @@ programs written in C or C++. However, Rust's data ownership model aims to
 provide better memory safety (which is important for security), and Rust also
 has modern package management and testing support, among other useful features.
 
+<div class="objectives-frame" markdown="1">
+
 **Objectives for this module:**
 
 - You will get an **initial understanding and some practice of Rust basics** and
@@ -26,8 +28,7 @@ has modern package management and testing support, among other useful features.
 - You will **learn to make a basic HTTP request and receive a response to it**
   from a compiled (Rust) program.
 
-- The work on this course is maintained in a Git repository. In this module you
-  will **learn the basic functions of Git**, and how to set up a Git repository.
+</div>
 
 ## Rust basics
 
@@ -77,7 +78,7 @@ as **non-mutable**, in which case their value cannot be changed afterwards, or
 3.1](https://doc.rust-lang.org/stable/book/ch03-01-variables-and-mutability.html)
 in the Rust book gives some examples of this.
 
-Like C or C++, Rust assignes fixed **data type** to all values and variables.
+Like C or C++, Rust assigns fixed **data type** to all values and variables.
 There are types for unsigned and signed integers of different sizes, and
 separately for floating point numbers of different sizes. Rust also has
 **boolean** type, and a type for primitive characters, similarly to C. See more
@@ -572,6 +573,8 @@ Connection: close
 
 ## Assignment
 
+<div class="assignment-frame" markdown="1">
+
 This assignment consists of multiple parts. First you will implement a simple
 TCP client that connects to "`www.aalto.fi`", port 80 and makes a GET request
 for "`/index.html`". I.e., for this assignment we use plaintext HTTP, even though
@@ -642,3 +645,5 @@ Finally, answer the following questions:
 
 - What tools did you use? In particular, if you used AI assistants, tell how did
   you use then and if they were helpful.
+
+</div>
