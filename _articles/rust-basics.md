@@ -632,8 +632,8 @@ keys:
 
 6. Print the response that the server returns to the request. Note that the
    processing the request may take a short while, because the server actually
-   tries to clone your repo (but deletes the local copy immediately after that).
-   Was request succesful according to response? If not, tell also that in your
+   tries to clone your repo.
+   Was request successful according to response? If not, tell also that in your
    report, but try to fix the situation. Note that you should have at least one
    commit in your Git repo, so that the server can fetch it.
 
