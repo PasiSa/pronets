@@ -35,6 +35,13 @@ impl TcpHeader {
     fn from_bytes(bytes: &[u8]) -> Self {
         assert_eq!(bytes.len(), 20, "Incorrect byte slice length");
 
+        /* Why try_into() is needed? from_be_bytes() takes a fixed-size array as
+           input. Our bytes variable is a slice (reference to an array), which is
+           technically a different type, so we need to convert it to an array.
+           try_into() can result in an error, if the conversion is not possible.
+           Therefore we use unwrap() that interrupts the program if the conversion
+           fails. Normally using unwrap() is not recommended, but in this case we
+           know that the input is valid. */
         TcpHeader {
             source_port: u16::from_be_bytes(bytes[0..2].try_into().unwrap()),
             dest_port: u16::from_be_bytes(bytes[2..4].try_into().unwrap()),
