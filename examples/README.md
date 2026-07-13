@@ -43,3 +43,14 @@ The examples are as follows:
   Can handle multiple connections in parallel. Demonstrates non-blocking sockets
   in an iterative single-threaded server using Rust's **[mio
   crate](https://crates.io/crates/mio)**.
+
+- **[threaded-server](https://github.com/PasiSa/pronets/tree/main/examples/threaded-server/src/main.rs)**:
+  Similar to
+  [iterative-server](https://github.com/PasiSa/pronets/tree/main/examples/iterative-server/src/main.rs),
+  but spawns a new thread for each active client.
+
+- **[async-server](https://github.com/PasiSa/pronets/tree/main/examples/async-server/src/main.rs)**:
+  Similar to
+  [threaded-server](https://github.com/PasiSa/pronets/tree/main/examples/threaded-server/src/main.rs)
+  but applies asynchronous operations using Rust's **[tokio
+  crate](https://crates.io/crates/tokio)**.
