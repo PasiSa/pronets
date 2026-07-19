@@ -23,7 +23,9 @@
       url: /server/
     - title: 4. Protocol design
       url: /protocol/
-    - title: 5. Concurrency
+    - title: 5. Testing
+      url: /testing/
+    - title: 6. Concurrency
       url: /concurrency/
 
 - title: Code Examples
