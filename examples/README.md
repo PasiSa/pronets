@@ -54,3 +54,22 @@ The examples are as follows:
   [threaded-server](https://github.com/PasiSa/pronets/tree/main/examples/threaded-server/src/main.rs)
   but applies asynchronous operations using Rust's **[tokio
   crate](https://crates.io/crates/tokio)**.
+
+## TLS
+
+There are client and server examples for testing Transport Layer Security. They
+are similar to above examples, but use TLS with **rustls** crate. They can be
+tested together using the local certificates provided.
+
+- **[tls-client](https://github.com/PasiSa/pronets/tree/main/examples/tls-client/src/main.rs)**:
+  Opens TLS session and sends message given as command line argument. You can
+  test it with local server (at localhost) by giving the CA certificate located
+  in `cert` directory, or a public server (e.g. HTTPS to `www.aalto.fi`) by not
+  giving the CA. See examples at the beginning of `main.rs`.
+
+- **[tls-server](https://github.com/PasiSa/pronets/tree/main/examples/tls-client/src/main.rs)**:
+  Modified from the
+  [async-server](https://github.com/PasiSa/pronets/tree/main/examples/async-server/src/main.rs)
+  example based on Tokio, but now using TLS with **tokio-rustls** crate. The
+  needed certificate and private key are located in the `cert` directory, which
+  you need to give as command line argument.

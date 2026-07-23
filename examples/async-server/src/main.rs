@@ -20,7 +20,7 @@ use tokio::{
 };
 
 
-// The below annotation sets up the tokio runtime for task scheduling with async/await.
+// The below attribute sets up the tokio runtime for task scheduling with async/await.
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     // Collect command-line arguments into a vector
