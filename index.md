@@ -26,7 +26,7 @@ The course material contains following sections:
 1. [Protocol design and project grouping](protocol/)
 1. [Testing and observability](testing/)
 1. [Concurrency and asynchronous programming](concurrency/)
-1. Security fundamentals
+1. [Security](security/)
 1. UDP and real-time transport
 1. Advanced topics
 

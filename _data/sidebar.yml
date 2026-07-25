@@ -27,6 +27,8 @@
       url: /testing/
     - title: 6. Concurrency
       url: /concurrency/
+    - title: 7. Security
+      url: /security/
 
 - title: Code Examples
   url: /examples/
