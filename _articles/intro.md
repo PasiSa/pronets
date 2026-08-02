@@ -468,7 +468,16 @@ where the changes in local repository is pushed to the shared server, and
 **pull** actions, where developers can download the recent commit events from
 the server to their own repository.
 
-_TODO: architecture picture similar to C++ material_
+The picture below shows how this might look on this course: Jukka and Liisa have
+a project team, and they have created a common repository on _version.aalto.fi_
+server. Both of them have cloned a local copy on their machines. In addition to
+the repository (which contains the git commits and other metadata), there are
+local work copies of the source files belonging to the project. On this course
+we also have our course server that also clones your git repositories, and
+builds and runs the server implementations in a Docker container at a publicly
+accessible address, so that other students can test them.
+
+![Git overview](/images/intro-git.svg){: width="90%" .center-img }
 
 ### Setting up a git repository
 
