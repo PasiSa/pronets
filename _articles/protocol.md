@@ -39,10 +39,16 @@ Content-Header, delimiters._
 
 All protocol messages follow the following pattern:
 
-- Message starts with message length: a 32-bit unsigned integer in network byte
-  order. The length indicates the number of bytes (octets) that follow the
-  integer
-- Three characters followed by a space, that indicate the message type. The
+- Message starts with **message length** in bytes: a 32-bit unsigned integer in
+  network byte order. The length indicates the full message length in bytes
+  (octets), including the length and ID fields.
+- Second field is the **message ID**: a 32-bit sequence. The purpose of message
+  ID is to match request messages with their responses. Easiest way to implement
+  this is to assign increasing unsigned integer numbers, but other allocation
+  method is possible, too, as long as the same ID is not used twice in the same
+  connection (unless all 32-bit identifiers are already used, after ID number
+  allocation can start from the beginning).
+- Three characters followed by a space, that indicate the **message type**. The
   characters MUST be from the 7-bit ASCII character range, i.e., they can be
   parsed in compatible way following the UTF-8 encoding. The characters SHOULD
   consist of letters A-Z in upper case letters.
@@ -63,7 +69,13 @@ All protocol messages follow the following pattern:
 
 - **ERR** (Error). _TBD_
 
-- **MSG** (Message). Sends chat message to given channel.
+- **MET** (Metrics). _TODO_
+
+- **MSG** (Message, from client). Sends chat message to given channel. The
+  message is broadcast to all users who are member of the given channel. Note
+  that the server needs to assign an unallocated ID to each of the receivers the
+  message is broadcast to. The response to the sender uses the same ID than the
+  client used with this request.
   - **Parameters:**
     - **Channel**: Name of channel to send chat message to. The message should
       be delivered to all users registered as members of the channel. See the
@@ -74,7 +86,23 @@ All protocol messages follow the following pattern:
       UTF-8 characters, for example line feeds. The length of the message is
       determined by the length field given at the start of the protocol message,
       taking the other protocol message fields into account.
-  - **Response:** _TBD_
+  - **Response:** No actual response, but also sender will receive the
+    broadcasted MSG from the server, that applies separate message ID
+    allocation.
+  - **Example:** _TBD_
+
+- **MSG** (Message, from server). Used by server to broadcast a message from an
+  user to everyone on the channel. The payload of the server-originated message
+  differs slightly from the client-originated message. Note that the Message ID
+  is allocated by server, it is not the same than in the client-originate MSG.
+  Server should not reuse same message ID twice with a particular client.
+  - **Parameters:**
+    - **Sender**: Username of the sender of the message.
+    - Space character
+    - **Channel**: Name of the channel to where message was intended.
+    - Space character
+    - **Message**: Message as UTF-8 encoded text format.
+  - **Response:** No response.
   - **Example:** _TBD_
 
 - **OBJ** (Data Object). Posts a named data object to the given channel.
@@ -100,7 +128,8 @@ All protocol messages follow the following pattern:
       The format of these bytes can be anything, they can be an UTF-8 encoded
       string or any binary sequence of bytes. The test sequence may be long (up
       to 4 GB), the length is only limited by the total message length.
-  - **Response:** The same message echoed back to the other end.
+  - **Response:** The same message echoed back to the other end. Therefore, also
+    the message length and message ID are same as in the request message.
   - **Example:** [length: 14]`TST 0123456789`
 
 - **USR** (User registration). Client sends this message to associate user with
@@ -112,11 +141,16 @@ All protocol messages follow the following pattern:
       field.
   - **Response:** Server replies by echoing the same message back, or with an
     **ERR** message, if registration was not successful, for example the name
-    was already taken.
+    was already taken. The response should have the same ID as the request message.
   - **Example:** [length: 10]`USR Jaakko` -- Registers user "Jaakko" with this TCP
     connection.
 
 ## Collaborative document protocol
+
+If you are short of ideas for your own topic, or lack collaborators working on
+it, here is a project idea you can start working on.
+
+_TODO_
 
 ## Assignment
 
