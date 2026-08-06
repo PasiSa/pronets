@@ -63,7 +63,7 @@ connection.
 
 ### Certificates
 
-An essential part of the TLS protocol is the **certifcate** that establishes
+An essential part of the TLS protocol is the **certificate** that establishes
 authenticity of the server. Certificate is created and signed by a trusted
 **certificate authority (CA)**, and the server sends it to the client when a TLS
 connection is established. Certificate includes (among some other things) the
@@ -176,7 +176,7 @@ Finally, with TLS it is good to close the connection gracefully using the
 A TLS server example can be found under
 **[tls-server](https://github.com/PasiSa/pronets/blob/main/examples/tls-server/src/main.rs)**
 directory of the course git repository. It similar to earlier [asynchronous
-server]()https://github.com/PasiSa/pronets/blob/main/examples/async-server/src/main.rs
+server](https://github.com/PasiSa/pronets/blob/main/examples/async-server/src/main.rs)
 example with Tokio, but now uses TLS. For using TLS with Tokio, there is a
 separate **[tokio-rustls](https://crates.io/crates/tokio-rustls)** crate that we
 are using.
@@ -308,7 +308,7 @@ The server's DNS name and IP address needs to match the CN or alternative names
 fields. If you are testing locally, you could just use localhost.
 
 Then the _server administrator_ creates a **certificate signing request** using
-the configuration file (\_server.cnf in this case) and private key. In this
+the configuration file (_server.cnf_ in this case) and private key. In this
 case, this creates a file _server.csr_.
 
     openssl req \
@@ -322,9 +322,9 @@ configuration file. It is given to the _certificate authority_ for signing. The
 request file is signed using the server administrator's private key, so that the
 CA can verify the authenticity of the public key included in the file.
 
-Then the _certificate authority_ creates the actual certificate (_server.crt in
+Then the _certificate authority_ creates the actual certificate (_server.crt_ in
 this case). i.e. essentially adds its digital signature covering the certificate
-information provided by the \_server administrator_, and passes it to the _server
+information provided by the _server administrator_, and passes it to the _server
 administrator_.
 
 ## Authentication and JWT
