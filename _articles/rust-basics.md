@@ -69,7 +69,7 @@ To get some hands-on feeling about Rust programming, you can also try the
 
 ### Variables, data types and functions
 
-Like practically all programming languages, Rust organizes the program code
+Like most other programming languages, Rust organizes the program code
 inside functions, and stores data values in variables. The **main** function
 starts the program execution, and any non-trivial program has many other
 functions to implement the program logic. In Rust, variables are declare either
@@ -95,7 +95,58 @@ overview of the basic control flow expressions. These are mostly similar to
 other common programming languages, perhaps apart from some syntactical
 specifics.
 
-_TODO: Discuss function return values, particularly the Result type_
+The following example defines an immutable string variable and a mutable integer
+variable. The integer is changed before both values are passed to a function:
+
+```rust
+fn make_score_message(name: &str, points: i32) -> String {
+    let doubled_points = points * 2;
+    format!("{name} has {doubled_points} points")
+}
+
+fn main() {
+    let player_name = "Ada";
+    let mut score: i32 = 10;
+
+    score += 5;
+
+    let message = make_score_message(player_name, score);
+    println!("{message}");
+}
+```
+
+The `player_name` variable is non-mutable, which is the default for variables
+declared with `let`. Assigning another value to it later would cause a compiler
+error. The `score` variable is declared with `let mut`, so its value can be
+changed. Its `i32` (32-bit signed integer) type is written explicitly, while
+Rust infers the type of `player_name` from its value. In Rust programming, it is
+common not to explicitly indicate the variable type with the definition, if the
+compiler can infer it. Editor tools, such as the Rust extensions in VScode can
+use visual hints to indicate the programmer what the actual type is. The
+`make_score_message` function receives both values, doubles the score, and
+returns a new `String` containing the result. The program prints `Ada has 30
+points`. The last line in the function does not end in semicolon, because it
+returns the String value that is passed as the return value of the function.
+This is common style in Rust, although the _return_ keyword is also available,
+similarly to C.
+
+You can try the above program by copying it to a source file (e.g. "_main.rs_"),
+and using the `rustc` compiler to build the binary:
+
+    rustc main.rs
+
+This produces executable file "_main_" that you can run on command line to see
+the output:
+
+    ./main
+
+Rust has two commonly encountered string types. A `String` owns its text, stores
+it in dynamically allocated memory, and can grow or be modified when the
+variable is mutable. The `str` type represents a sequence of UTF-8 - encoded
+text that is usually accessed through a borrowed reference written as `&str`.
+String literals such as `"Ada"` have the type `&str`. In the example, the
+function borrows this string data through its `name: &str` parameter, but
+creates and returns an owned `String` with the `format!` macro.
 
 ### Ownership and references
 
@@ -115,8 +166,6 @@ out of scope. [Rust book section
 4.1](https://doc.rust-lang.org/stable/book/ch04-01-what-is-ownership.html) has
 more about this.
 
-_TODO: example_
-
 Especially when functions are used, we talk about borrowing, i.e., passing a
 value by reference to be used inside the function. In this case the ownership is
 not transferred inside the function, but stays with the caller, and the function
@@ -130,7 +179,27 @@ book section
 4.2](https://doc.rust-lang.org/stable/book/ch04-02-references-and-borrowing.html)
 has more about this.
 
-_TODO: example_
+The following function borrows a `String` through a mutable reference and
+modifies it without taking ownership:
+
+```rust
+fn add_greeting(name: &mut String) {
+    name.insert_str(0, "Hello, ");
+    name.push('!');
+}
+
+fn main() {
+    let mut name = String::from("Ada");
+
+    add_greeting(&mut name);
+    println!("{name}"); // Prints: Hello, Ada!
+}
+```
+
+The caller declares `name` as mutable and creates a mutable reference with
+`&mut name`. The parameter type `&mut String` allows `add_greeting` to change
+the borrowed value. Ownership remains in `main`, so `name` can still be used
+after the function call and contains the changes made by the function.
 
 ### Structures and methods
 
@@ -145,23 +214,230 @@ structure's namespace. This is a good way to structure the program into logical
 modules, similarly to how classes are used in object-oriented programming. [Rust
 book section
 5.3](https://doc.rust-lang.org/stable/book/ch05-03-method-syntax.html) discusses
-methods.
+methods. The methods are defined in a separate `impl` block, that usually
+follows the actual `struct` definition that just defines the data that is
+included in the struct, as shown in example below. Functions usually use `self`
+reference to refer to an instance of a struct that is being operated. If the
+function modifies the content of the structure, the self reference needs to be
+defined mutable: `&mut self`. Ownership rules apply as with any other variables
+also for the "self variable.
 
-_TODO: Enums and Tuples_
+**Enumeration (_enum_)** is a a type that can have multiple variants. Below is
+an example (related to our course scope), of a structure that can handle both
+IPv4 and IPv6 addresses. The example also shows a simple struct. This example is
+taken and modified from [Rust book section
+6.1](https://doc.rust-lang.org/stable/book/ch06-01-defining-an-enum.html) that
+discusses more about enums.
+
+```rust
+enum IpAddrKind {
+    V4,
+    V6,
+}
+
+struct IpAddr {
+    kind: IpAddrKind,
+    address: String,
+}
+
+impl IpAddr {
+    fn print_address(&self) {
+        println!("{}", self.address);
+    }
+}
+
+fn main() {
+    let home = IpAddr {
+        kind: IpAddrKind::V4,
+        address: String::from("127.0.0.1"),
+    };
+
+    let loopback = IpAddr {
+        kind: IpAddrKind::V6,
+        address: String::from("::1"),
+    };
+
+    home.print_address();
+    loopback.print_address();
+}
+```
+
+Two particularly useful enums defined in Rust standard library are **Option**
+and **Result**.
+
+**Option** can have two values: **None** or **Some(T)**, where T can be any
+generic type. This allows specifying variables that do not always contain valid
+value. Classically in C, _null_ value has been used for this situation. The Rust
+book discusses why this has been a mistake, that has led to different kinds of
+vulnerabilities and system crashes over the years. Rust does not use _null_, but
+the _Option_ enum, that is a cleaner way of expressing the same meaning.
+
+**Result** type can also have two values: **Ok(T)** or **Err(E)**. Both variants
+contain generic data type. For example, if executing a function us success, it
+can return some value of type _T_, wrapped inside _Ok_ enum. If there is an
+error, it returns _Err_, with E telling something about the reason of error. It
+could be a string or an error code, for example. This is particularly useful in
+network programming, because or operations interacting with external network can
+fail for various reasons not in the control of the programmer or the user. In C,
+classically special return values, such as -1 as integer are used to indicate
+error, e.g. in Posix API. In my opinion, the _Result_ enum is nicer way for
+doing that.
+
+The following example uses `Option` when an address might not be found and
+`Result` when parsing a port number might fail:
+
+```rust
+fn find_address(host: &str) -> Option<String> {
+    if host == "localhost" {
+        Some(String::from("127.0.0.1"))
+    } else {
+        None
+    }
+}
+
+fn parse_port(text: &str) -> Result<u16, String> {
+    match text.parse::<u16>() {
+        Ok(port) => Ok(port),
+        Err(_) => Err(format!("'{text}' is not a valid port number")),
+    }
+}
+
+fn main() {
+    match find_address("example.com") {
+        Some(address) => println!("Address: {address}"),
+        None => println!("Address was not found"),
+    }
+
+    match parse_port("not-a-number") {
+        Ok(port) => println!("Port: {port}"),
+        Err(error) => println!("Could not parse port: {error}"),
+    }
+}
+```
+
+The example also shows the use of `match` expression, that is particularly
+useful in Rust to handle the different possible cases. It requires the program
+to handle both possible variants. In the first call, `find_address` returns
+`None`, and in the second call, `parse_port` returns `Err`. Using `"localhost"`
+and `"8080"` instead would exercise the `Some` and `Ok` branches.
 
 ### Collections
 
-_TODO: Allocated from heap._
+Collections are dynamic data types to store multiple data items of varying
+numbers. The memory used by collection is dynamically allocated from the heap
+memory of the computer system, and released automatically when collection runs
+out of scope (i.e., code block or function it is used in).
 
-See text about vectors in [Rust book section
-8.1](https://doc.rust-lang.org/stable/book/ch08-01-vectors.html).
+**Vector (Vec)** is an ordered list of values of specific type (see [Rust book
+section 8.1](https://doc.rust-lang.org/stable/book/ch08-01-vectors.html)). The
+different items in the vector can be pointed by its index. The _Vec_ type has
+various functions for managing, such as `push()` to add values at the end of the
+vector or `pop()` to take the last value from the vector. The [Vec reference
+documentation](https://doc.rust-lang.org/std/vec/struct.Vec.html) has a complete
+list of these operations.
 
-See text about Hash Maps in [Rust book section
-8.3](https://doc.rust-lang.org/stable/book/ch08-03-hash-maps.html).
+The following example creates a vector of port numbers and modifies its
+contents:
+
+```rust
+fn main() {
+    let mut ports = vec![80, 443];
+
+    ports.push(8080);
+    println!("First port: {}", ports[0]);
+
+    for port in &ports {
+        println!("Port: {port}");
+    }
+
+    match ports.pop() {
+        Some(port) => println!("Removed port: {port}"),
+        None => println!("The vector was empty"),
+    }
+}
+```
+
+The `vec!` macro initializes the vector, and Rust infers its type as `Vec<i32>`.
+The loop borrows the vector so it remains usable afterwards. The `pop()` method
+returns an `Option`: it contains `Some(port)` when an item was removed or
+`None` when the vector was empty.
+
+Vector should not be confused with an **array**, that has a fixed length that is
+part of its type, such as `[i32; 4]`. The size of the array cannot change after
+it has been created, and array is not dynamically allocated. Their relationship
+is therefore a bit similar than between _String_ and _str_ discussed above.
+
+**HashMap** maps keys (of chosen type) to values (of chosen type), and allows
+efficient lookup of values based on the key (more details in [Rust book section
+8.3](https://doc.rust-lang.org/stable/book/ch08-03-hash-maps.html)). The entries
+are placed in memory using a hashing function, and the order of items in
+_HashMap_ is not therefore deterministic. New key-value pairs can be added to
+HashMap using the `insert()` function. Each key can be in _HashMap_ only once:
+if the inserted key already existed in HashMap, the value will be replaced by
+the new one.
+
+The following example maps service names to their default port numbers:
+
+```rust
+use std::collections::HashMap;
+
+fn main() {
+    let mut service_ports: HashMap<&str, u16> = HashMap::new();
+
+    service_ports.insert("http", 80);
+    service_ports.insert("https", 443);
+
+    match service_ports.get("https") {
+        Some(port) => println!("HTTPS uses port {port}"),
+        None => println!("HTTPS was not found"),
+    }
+
+    for (service, port) in &service_ports {
+        println!("{service}: {port}");
+    }
+}
+```
+
+The type `HashMap<&str, u16>` specifies string slices as keys and unsigned
+16-bit port numbers as values. The `get()` method returns an `Option`, because
+the requested key might not exist. Iterating over a `HashMap` produces its
+key-value pairs, but their order is not guaranteed.
 
 ### Setting up a Rust project
 
-_TODO: Cargo.toml, common directory structure_
+For any larger project, it is better to use the **cargo** tool for various
+tasks. Cargo can do many things needed during development: building and running
+the project, manage library dependencies, cleaning up code style, running tests,
+and so on.
+
+A new cargo project is created in the following way:
+
+    cargo new my_project
+
+This creates a `Cargo.toml` file that defines the project attributes, and
+particularly, library dependencies. It also creates a `src` directory where the
+source files are customarily placed, and a placeholder `main.rs`. Also a new
+local git repository is created, and a default `.gitignore` file that determines
+which files should not be pushed to git repository (for example the target
+binaries). After this the repository could then be pushed to remote server for
+sharing the work.
+
+`cargo build` compiles the project into binary executable. `cargo run` then
+executes the binary (that can also be located under `target` directory tree). If
+sources have been changed when executing `cargo run` also re-compiles the
+project.
+
+There are many more features in cargo, of which some we will discuss a bit
+later, e.g. related to testing. There is a separate **[online Cargo
+book](https://doc.rust-lang.org/cargo/index.html)** discussing different
+features in detail.
+
+When your program grows, you will want to split it into multiple logical modules
+and source files with specifically defined public interfaces that hide the
+implementation details. [Rust book chapter
+7](https://doc.rust-lang.org/stable/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html)
+discusses thoroughly the concepts of **packages** and **crates** and how the
+project is organized into **modules** of specific file hierarchy.
 
 ## Stream socket basics for client applications
 
@@ -364,12 +640,13 @@ fn main() -> io::Result<()> {
 ```
 
 The `Read` and `Write` names imported from `std::io` are **traits**. A trait in
-Rust defines behavior that different types can provide. In this example,
+Rust defines behavior that different types can provide. This is similar to
+_interface_ in Java or _pure abstract class_ in C++. In this example,
 `TcpStream` implements both of these traits: it can be read from, because bytes
-can arrive from the network, and it can be written to, because bytes can be
-sent through the connection.
+can arrive from the network, and it can be written to, because bytes can be sent
+through the connection.
 
-The `Read` trait provides methods for receiving bytes from a stream. For
+The `Read` trait provides functions for receiving bytes from a stream. For
 example, `read_to_string()` reads bytes from the TCP connection and appends
 them to the `String` variable. The `Write` trait provides methods for sending
 bytes to a stream. For example, `write_all()` writes the whole byte slice to the
@@ -571,9 +848,9 @@ Connection: close
 }
 ```
 
-## Assignment
-
 <div class="assignment-frame" markdown="1">
+
+## Assignment
 
 This assignment consists of multiple parts. First you will implement a simple
 TCP client that connects to "`www.aalto.fi`", port 80 and makes a GET request
