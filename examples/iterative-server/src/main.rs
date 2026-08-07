@@ -12,8 +12,7 @@ mod tokenmanager;  // This example also has tokenmanger module in separate file.
 use std::{
     collections::HashMap,
     env,
-    error::Error,
-    io::{Read, Write},
+    io::{self, ErrorKind, Read, Write},
     net::{SocketAddr},
 };
 
@@ -36,18 +35,21 @@ struct Client {
 }
 
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> io::Result<()> {
     // Collect command-line arguments into a vector
     let args: Vec<String> = env::args().collect();
 
     if args.len() != 2 {
         eprintln!("arguments: <host>:<port>");
-        return Err("Invalid command".into());
+        return Err(io::Error::new(ErrorKind::InvalidInput, "Invalid command"));
     }
 
     // Create a passive server socket and bind to address given as command line argument.
     // If there is an error in bind, exit the main function with error.
-    let addr = args[1].parse()?;
+    // map_err() is used to convert the error type from std::net::AddrParseError to std::io::Error.
+    let addr = args[1]
+        .parse()
+        .map_err(|error| io::Error::new(ErrorKind::InvalidInput, error))?;
     let mut server = TcpListener::bind(addr)?;
 
     // Set up MIO event engine for handling concurrent I/O operations.

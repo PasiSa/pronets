@@ -2,25 +2,23 @@
  * Handle incoming connections one at the time: read some data from socket,
  * and echo it back. Bind to "0.0.0.0:<port>" if connections are allowed from any
  * interface.
- * 
+ *
  * Usage: cargo run -- <IP>:<port>
  */
 
 use std::{
     env,
-    error::Error,
-    io::{Read, Write},
+    io::{self, ErrorKind, Read, Write},
     net::TcpListener,
 };
 
-
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> io::Result<()> {
     // Collect command-line arguments into a vector
     let args: Vec<String> = env::args().collect();
 
     if args.len() != 2 {
         eprintln!("arguments: <host>:<port>");
-        return Err("Invalid command".into());
+        return Err(io::Error::new(ErrorKind::InvalidInput, "Invalid command"));
     }
 
     // Create a passive server socket and bind to address given as command line argument.
@@ -35,7 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // Read at most 160 bytes from the established connection
         // 'readn' will contain the number of bytes actually read.
-        // If read fails, the error causes main function to exit. 
+        // If read fails, the error causes main function to exit.
         let mut buf: [u8; 160] = [0; 160];
         let readn = socket.read(&mut buf)?;
 
