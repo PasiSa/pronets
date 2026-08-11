@@ -140,13 +140,14 @@ the output:
 
     ./main
 
-Rust has two commonly encountered string types. A `String` owns its text, stores
-it in dynamically allocated memory, and can grow or be modified when the
-variable is mutable. The `str` type represents a sequence of UTF-8 - encoded
-text that is usually accessed through a borrowed reference written as `&str`.
+Rust has two commonly used string types. A `String` owns its text, stored in a
+dynamically allocated buffer, and can grow or be modified when the variable is
+mutable. The `str` type represents a sequence text that is usually accessed
+through a borrowed reference written as `&str` (called "string **slice**").
 String literals such as `"Ada"` have the type `&str`. In the example, the
 function borrows this string data through its `name: &str` parameter, but
-creates and returns an owned `String` with the `format!` macro.
+creates and returns an owned `String` with the `format!` macro. In Rust, strings
+are UTF-8-encoded.
 
 ### Ownership and references
 
@@ -362,10 +363,25 @@ The loop borrows the vector so it remains usable afterwards. The `pop()` method
 returns an `Option`: it contains `Some(port)` when an item was removed or
 `None` when the vector was empty.
 
-Vector should not be confused with an **array**, that has a fixed length that is
-part of its type, such as `[i32; 4]`. The size of the array cannot change after
-it has been created, and array is not dynamically allocated. Their relationship
-is therefore a bit similar than between _String_ and _str_ discussed above.
+A vector should not be confused with an **array**, that has a fixed length that
+is part of its type, for example as in following:
+
+```rust
+fn main() {
+    let mut numbers = [5, 6, 7, 8];  // Inferred as [i32; 4]
+
+    numbers[0] = 4;
+
+    for number in numbers {
+        println!("number: {number}");
+    }
+}
+```
+
+The above array contains four i32-type elements stored inline (not typically in
+a dynamically allocated buffer). The length of the array is part of its type,
+and cannot be changed. An array can be mutable, in which case its elements can
+be changed, but its length is still fixed.
 
 **HashMap** maps keys (of chosen type) to values (of chosen type), and allows
 efficient lookup of values based on the key (more details in [Rust book section
@@ -392,6 +408,7 @@ fn main() {
         None => println!("HTTPS was not found"),
     }
 
+    // Print all entries in the service_ports HashMap.
     for (service, port) in &service_ports {
         println!("{service}: {port}");
     }
@@ -478,13 +495,14 @@ In Rust, a TCP-based client stream socket is typically created using the
 
 Using the string argument is most convenient in most cases, but there are also
 other ways for passing the destination address, for example in the binary form.
-The argument can include a DNS name, in which case a DNS name resolution is done
+The argument specifies the host to connect, and destination port at that host.
+The host can be a DNS name, in which case a DNS name resolution is made
 first to find the actual destination IP address, or it could be directly an IP
-address. A full documentation of the **TcpStream** struct is given in [Rust
+address. A full documentation of the **TcpStream** is given in [Rust
 documentation](https://doc.rust-lang.org/stable/std/net/struct.TcpStream.html),
 including some examples.
 
-Connect function returns a **Result** enum, i.e. it can fail for different
+The `connect()` function returns a **Result** enum, i.e. it can fail for different
 reasons, for example if the name cannot be resolved, or the address is otherwise
 invalid, or if the destination address and port cannot be reached. If the
 function is successful, it returns a stream object that can be used for different
@@ -512,7 +530,15 @@ may stop for tens of seconds, after which the call either succeeds or fails.
 This needs to be taken into account if the client program has interactive or
 time-sensitive components.
 
-_TODO: add a time-sequence picture about all this_
+The below diagram shows how this message exchange progresses over time: the DNS
+request is made to a separate DNS server configured in the client system. After
+(if) the request is successful, TCP's three-way handshake is started, and if it
+completes successfully, the socket can be used for reading and writing. The
+client system, chooses an available local TCP port automatically (in this
+example, port 51782). The diagram also shows the server-side functions called,
+which we will discuss in more detail in the next module.
+
+![TCP connection establishment](/images/basics-tcpconnect.svg){: width="90%" .center-img }
 
 ### Writing data to socket
 
