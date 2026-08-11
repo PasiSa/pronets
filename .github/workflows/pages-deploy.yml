@@ -40,7 +40,7 @@ jobs:
           path: images
           output: .
           format: svg
-          transparent: true
+          transparent: false
           remove-page-suffix: true
           action-mode: all
 
