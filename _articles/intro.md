@@ -2,11 +2,11 @@
 title: Introduction
 ---
 
-This module covers overview of the course arrangements, Computer networking
+This module covers the computer networking
 basics needed on this course, and introduces some useful network tools. We
 assume that you have done an elementary computer networks course, such as
-ELEC-C7241 Tietokoneverkot or ELEC-C7420 Basic principles in networking.
-Therefore, this section is intentionally brief recap of concepts that are
+_ELEC-C7241 Tietokoneverkot_ or _ELEC-C7420 Basic principles in networking_.
+Therefore, this section is just a brief reminder of the concepts that are
 relevant to understand when going forward with this course.
 
 <div class="objectives-frame" markdown="1">
@@ -32,18 +32,64 @@ relevant to understand when going forward with this course.
 
 </div>
 
-## Arrangements
+## Overview of the course
 
-_TODO: Specific course instance arrangements will be presented in MyCourses and
-teaching sessions_
+The course is divided into 9 modules with dedicated topics. In most modules you
+will work towards a client-server project of a chosen topic and enhance it
+according to the theme of the module. Typically, in each module you will need to
+implement some new code (or modify earlier code), and do a written assignment
+related to discussing and analyzing your implementation. We do not evaluate and
+grade the details of your code, but the reflection and analysis you have done in
+the written reports.
 
-Specific day-to-day arrangements are discussed on opening lecture and in
-MyCourses. These GitHub pages are focused on the course contents.
+This first module covers the basic fundamentals of the two versions of Internet
+Protocol, **IPv4** and **IPv6**, and the transport protocols **TCP** and
+**UDP**, and the **Domain Name System (DNS)**, that is essential to all Internet
+services to function. We also cover commonly used network diagnostics and
+analysis tools, and introduce the **Git version control system** that will be
+used to manage the projects during the course. You will practice the use of
+**Wireshark** and and **netcat** for a simple HTTP interaction.
 
-Course approach: as we progress through this material, you will develop a fully
-functioning client-server network application.
+**Module 2** starts with introduction to basic concepts of the **Rust programming
+language** that is used in examples throughout the course, and which we recommend
+to use also in the assignments. Using Rust you will implement a simple TCP
+client application that makes a HTTP request, and you will do a small practice
+assignment interacting with our course server used during the course.
 
-Course structure overview: _TBD_
+In **Module 3** you will implement a basic TCP server using Rust, without yet paying
+much attention to efficient handling of multiple concurrent clients or
+performance overall. We will also discuss basics of **Docker** containers and
+you will implement a simple TCP server and build a Docker image out of it. Using
+a given API you will register your implementation to our course server, that
+will build and run the image at a public IP address and agreed port.
+
+**Module 4** starts the actual project that will be build aside the assignments
+during rest of the course. You have some freedom to choose the topic and details
+of the implementation, but all projects need to follow certain protocol
+principles and common protocol messages documented in this module. This allows
+some form of interoperability testing between different projects that are
+deployed as Docker containers on our course server. You will implement some of
+these core messages in your project implementation.
+
+**Module 5** is focused on testing and observing the implementation behavior
+and performance. We will get familiar with the testing framework provided by
+Rust, and some tracing tools to analyze the software behavior and performance.
+
+**Module 6** discusses more advanced forms for handling larger number of client
+sessions concurrently and efficiently at the server. You will learn to implement
+multi-threaded server and handle shared data safely in concurrent environment.
+You will get familiar with asynchronous programming model supported by Rust, and
+the popular **Tokio** library to manage asynchronous system.
+
+In **Module 7** we will add security to our projects. From this point on, all
+projects must use **Transport Layer Security (TLS)** in communication between
+client and server implementations and in communication with the course server
+APIs. We will learn to use **JSON web tokens** for authentication and
+authorization between clients and server.
+
+**Module 8** discusses **UDP and real-time communication**. You will add a
+real-time component to your software that uses UDP instead of TCP. **Module 9**
+is left for advanced topics.
 
 ## Internet Protocol (IP)
 
@@ -170,6 +216,11 @@ TCP is a connection-oriented protocol between two end points: connection needs
 to be opened first by the client to a specified IP address and TCP port, before
 data can be sent. Other end of the connection is the **server** that listens to
 incoming TCP connections from clients at a known IP address and that TCP port.
+The connection begins with **three-way handshake** that is initiated by the
+client, and it is usable only after the handshake is complete. After this,
+either end can send data independently, although a common pattern is that the
+client starts the conversation (e.g. in HTTP protocol).
+
 Like IP address, the 16-bit TCP port is specified for both ends of the
 connection, and is used to separate different TCP connections between hosts. The
 server-side port is also used to as well-known identifier for a particular
@@ -238,11 +289,12 @@ and AAAA queries at the same time, if it is not known which IP address family is
 available.
 
 The Domain Name System is distributed, hierarchic and heavily replicated. The
-**root zone** that holds the **top-level domains** (such as '_.fi_' or '_.com_'
-is distributed into number of root servers across the world that hold the **NS
-type resource records** for the authoritative name servers for each top-level
-domain. These authoritative name servers resolve the next level of domain names,
-until the actual IP address or other queried resource type is resolved.
+**root zone** that holds the **top-level domains (TLD)** (such as '_.fi_' or
+'_.com_' is distributed into number of root servers across the world that hold
+the **NS type resource records** for the authoritative name servers for each
+top-level domain. These authoritative name servers resolve the next level of
+domain names, until the actual IP address or other queried resource type is
+resolved.
 
 Because the hierarchic resolution would cause delay if performed separately
 every time (each host needs many name queries in short period of time), and
@@ -262,7 +314,22 @@ made a query for 'A' type record or 'AAAA' type record, hinting that Aalto web
 pages are hosted by an external web hosting service, that might actually be far
 away from the servers at Aalto campus.
 
-_TODO: how name resolution process works, include image_
+The below image illustrates how the DNS resolution process typically works, and
+why it may take time to get the actual response. The picture is taken from blog
+article "[How DNS Resolution
+Works](https://dev.to/swadesh_chatterjee_b35563/how-dns-resolution-works-55jm)".
+
+![DNS resolution](https://media2.dev.to/dynamic/image/width=800%2Cheight=%2Cfit=scale-down%2Cgravity=auto%2Cformat=auto/https%3A%2F%2Fdev-to-uploads.s3.amazonaws.com%2Fuploads%2Farticles%2Frklsx8po24i2biaoscvm.png){: width="90%" .center-img }
+
+The common pattern is that client sends a DNS query to the local DNS server. The
+local DNS server/resolver starts resolving the name hierarchy starting from the
+top-level domain. There are a number of well-known root server that store
+information about the top-level domains, which is resolved first. Then, a name
+server for that TLD is connected to resolve the address of the authoritative
+name server for the requested domain. Finally the local DNS server finds out the
+actual IP address of the server, that is delivered to the client. Because DNS
+resource records are cached, for commonly used names some of these steps can be
+skipped.
 
 ## Network analysis tools
 
@@ -579,29 +646,36 @@ and want to synchronize the work between them.
 The first assignment is about setting up the git repository for future tasks,
 and to get familiar with the tools discussed in this module.
 
-First, set up the git repository following the rules above. Once you have
-created the repository, and you have tested that it works, report its URL in
-MyCourses (_TODO: add the specific coordinates_). Give read permissions also to
-course personnel (_TODO: specific details_).
+First, set up a **private** git repository for your course work. Once you have
+created the repository, and you have tested that it works, report its URL in the
+[MyCourses
+questionnaire](https://mycourses.aalto.fi/mod/questionnaire/view.php?id=1528203).
+Give read permissions to the repository also to course personnel.
 
 Open Wireshark and start capturing packets from your network interface. Pick a
-well-known organization, but not Aalto Univeristy (e.g. a company, or another
-university than Aalto).
+well-known organization, but not Aalto University (e.g. a company, or another
+university than Aalto). Take the following steps and report the outcome in your
+assignment report (submitted in MyCourses).
 
 1. Using **dig**, check if the main web page of your selected organization has only
    IPv4 address, or if it also has IPv6 address for serving the web content. Is
    there a CNAME record that would indicate the actual host serving the content?
 
-2. How many DNS packets you see in wireshark? Use filter for UDP port 53 to see
-   it better.
+2. How many DNS packets do you see in Wireshark as a results of above operation?
+   Use filter for UDP port 53 to see these packets better.
 
-3. Create a HTTP request using **netcat** to TCP port 80. What kind of response do
-   you get? What is the HTTP response code on the first line? Look up from the
-   Internet what it means and explain.
+3. Create a HTTP request using **netcat** to TCP port 80. What kind of response
+   do you get? What is the HTTP response code on the first line, and what does
+   it mean? (You may use resources in the Internet to find this information)
 
 4. How many TCP packets were transferred back and forth to TCP port 80 as a
    result of this operation. Explain in your own words what happened in each
    packet. (If the HTTP response is large and spans over multiple packets, you
-   don't need to explain them separately)
+   don't need to explain every packet separately)
+
+Finally, answer the following questions:
+
+- How much time did you use for this assignment?
+- What was easy or difficult in the assignment?
 
 </div>
