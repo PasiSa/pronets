@@ -611,7 +611,7 @@ variations.
 
 There is also a similar example,
 "**[simple-client](https://github.com/PasiSa/pronets/tree/main/examples/simple-client/src/main.rs)**"
-in the "[examples folder](https://github.com/PasiSa/pronets/tree/main/examples)"
+in the [examples folder](https://github.com/PasiSa/pronets/tree/main/examples)
 course material git repository. The example contains all needed Rust project
 files to build and try it. One way to test this and other examples is to clone
 the course material repository to your own machine and try it out using normal
@@ -880,9 +880,14 @@ Connection: close
 
 This assignment consists of multiple parts. First you will implement a simple
 TCP client that connects to "`www.aalto.fi`", port 80 and makes a GET request
-for "`/index.html`". I.e., for this assignment we use plaintext HTTP, even though
-it is strongly discouraged in reality. For this assigment, start a project in
-your Git repository under folder "http-client".
+for "`/index.html`". I.e., for this assignment we use unsecure HTTP (which is
+not recommended in reality, but we do not know TLS yet). In the git repository
+you created earlier, create a folder "**http-client**", and place your TCP
+client source code there as file titled "`main.rs`".
+
+Write a short report as MyCourses assignment submission, where you describe your
+progress through the following steps, and answer the questions made along the
+way.
 
 1. Open Wireshark and capture packets that are destined to UDP port 53 or TCP
    port 80.
@@ -917,19 +922,21 @@ response that is printed to the standard output.
    additional information are the headers telling?
 
 Extend your program with another HTTP request. This time it is a POST request
-that sends some information to the server, which causes it to fetch a Git
-repository. The request should be sent to `pronets.dice.aalto.fi` and then
-endpoint is "`/fetch-git`". We still use port 80 at server. You don't need to
+that sends some information to the server, which causes it to fetch the given Git
+repository. The request should be sent to `pronets.dice.aalto.fi`, with the
+HTTP URL "`/fetch-git`". We use port 80 at server. You don't need to
 analyze Wireshark from this point on, but keeping it open does not harm.
 
 The POST request body should be JSON formatted (use Content-Type
 `application/json`, as in example above), and it should have the following
 keys:
 
-- **"username"**: The username you want to use with the server. This should be
-  the username you declared earlier.
-- **"git-repo"**: The URL of the Git repository you are using for your course
-  assignments and project.
+- **"username"**: The name that identifies the project. This should be the same
+  name you gave in the project information questionnaire on the first week of
+  the course.
+- **"git-repo"**: The SSH URL of the Git repository you are using for your
+  course assignments and project (you can find the SSH address under the blue
+  "_Code_" button on the version.aalto.fi front page).
 
 {:start="6"}
 
@@ -940,12 +947,14 @@ keys:
    report, but try to fix the situation. Note that you should have at least one
    commit in your Git repo, so that the server can fetch it.
 
+After you are done with your code, commit and push it to your repository. In the
+commit log message, tell that this assignment completes assignment 2, e.g.
+something like "_Assignment 2 completed_".
+
 Finally, answer the following questions:
 
 - How much time did you use for this assignment?
-
 - What was easy or difficult in the assignment?
-
 - What tools did you use? In particular, if you used AI assistants, tell how did
   you use then and if they were helpful.
 
