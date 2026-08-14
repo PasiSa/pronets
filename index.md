@@ -5,7 +5,9 @@ layout: home
 # Programming Networked Systems course
 
 These pages contain the material and assignments for the **Programming Networked
-Systems course (ELEC-C7260)** at Aalto University.
+Systems course (ELEC-C7260)** at Aalto University. The practical week-by-week
+arrangements and assignment submission forms are in
+**[MyCourses](https://mycourses.aalto.fi/course/view.php?id=51401)**.
 
 The code examples in this material are provided in the
 **[Rust](https://www.rust-lang.org/)** programming language, and use of Rust is
