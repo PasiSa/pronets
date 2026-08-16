@@ -1,0 +1,35 @@
+import { Button, LineEdit, TextEdit, VerticalBox } from "std-widgets.slint";
+
+export component AppWindow inherits Window {
+    title: "Demo TCP Chat Client";
+    width: 600px;
+    height: 400px;
+
+    in-out property <string> conversation;
+    callback send-message(string);
+    callback send-test();
+
+    VerticalBox {
+        padding: 8px;
+        spacing: 8px;
+
+        TextEdit {
+            text: root.conversation;
+            read-only: true;
+            vertical-stretch: 1;
+        }
+
+        message-input := LineEdit {
+            placeholder-text: "Type a message";
+            accepted => {
+                root.send-message(self.text);
+                self.text = "";
+            }
+        }
+
+        Button {
+            text: "Send test";
+            clicked => { root.send-test(); }
+        }
+    }
+}

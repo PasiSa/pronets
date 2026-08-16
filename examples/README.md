@@ -16,6 +16,8 @@ things.
 
 The examples are as follows:
 
+## Basic socket operations
+
 - **[simple-client](https://github.com/PasiSa/pronets/tree/main/examples/simple-client/src/main.rs)**:
   Opens connection, then writes and reads a bit of data.
 
@@ -30,6 +32,15 @@ The examples are as follows:
   socket, until the socket is closed. Client just sends the requested number of
   bytes. Used to demonstrate the effect of socket buffering on socket API
   behavior.
+
+## Project template
+
+- **[project-template](https://github.com/PasiSa/pronets/tree/main/examples/project-template)**:
+  An example project template composed of two Rust packages for client and
+  server applications. It also shows how the Slint UI framework is used for
+  window-based client GUI.
+
+## Different server variants
 
 - **[simple-server](https://github.com/PasiSa/pronets/tree/main/examples/simple-server/src/main.rs)**:
   Accepts a connection, then reads data from socket and writes some data back,
