@@ -1,5 +1,5 @@
 ---
-title: Simple server and Docker containers
+title: Server sockets and Docker containers
 ---
 
 Compared to network clients, server programming presents different properties
@@ -157,10 +157,17 @@ the loop.
 
 ## I/O multiplexing and non-blocking sockets
 
+By default a socket is opened in blocking mode, i.e., function calls such as
+_read_ and _write_ can block the execution of the program until it becomes
+possible to read or write. When a program needs to react to other inputs timely,
+i.e. user interaction or multiple clients connected to server concurrently, such
+blocking behavior causes problems.
+
 Sockets can be **can be configured into a non-blocking mode**, in which case the
-calls return immediately, but for example, if `read` did not have any data to
-read, and it would have blocked in the blocking mode, the call returns a
-specific **WouldBlock** error code (that is not actually an error). A naive
+calls return immediately. In this case, if for example the `read` function did
+not have any data to read, and it would have blocked in the blocking mode, the
+non-blocking version of the call returns a specific **WouldBlock** "error" (that
+is not actually an error, but just tells there was nothing to read). A naive
 implementation would be to build a while loop in the server that reads all
 sockets in this way. However, this would create a busy loop that would
 unnecessarily load the CPU, even if no data is coming from any of the clients.
@@ -179,7 +186,7 @@ In Rust, [**mio**](https://docs.rs/crate/mio) is a library (or "crate" in Rust
 terminology) that encapsulates the non-blocking socket operation into convenient
 set of functions. Our next example is
 **[iterative-server](https://github.com/PasiSa/pronets/tree/main/examples/iterative-server/src/main.rs)**
-that demonstrates the use of _mio_ (you may want to open the code in a parallel
+that demonstrates the use of _mio_ (you may want to open the code in a separate
 window while reading this section). The server just reads incoming data from
 socket and echoes it back. Different from the earlier implementation, the server
 does not close the socket after writing data, but after responding to client, it
@@ -215,11 +222,11 @@ token is allocated for it and registered to Mio as an interesting event source.
 
 Mio has separate event types for situations when socket is readable, and for
 situations when socket is writable without blocking the execution. If we wanted
-a proper implementation, we should also handle the `write` calls through an
+a proper implementation, we should also handle the `write()` calls through an
 event processing loop, but in this case we skip it for simplicity (and perhaps
-laziness). On the other hand, we write a maximum of 160 bytes, so it can be
-assumed to take quite many write calls without client reading anything before
-the send buffer gets full and blocks writes.
+laziness). On the other hand, we write a maximum of 160 bytes, and the operating
+system socket buffers are usually at least tens of kilobytes, so having
+`write()` call to block because of full socket buffer, is quite unlikely.
 
 After client connections are opened, also the possible client socket events are
 checked in separate if branch. Here one should note handling of the `read` call
@@ -269,12 +276,11 @@ course servers hosted by the university. Docker allows you to test the
 application first locally and then move it to a server where everyone can access
 it.
 
-First, one produces a Docker image that contains a packages filesystem and
-needed metadata. `Dockerfile` specifies the recipe for building an image. Docker
-images are typically layered: new files and data are built on top of an base
-image (for example one that contains the basic Linux tools), so that a single
-image does not have to contain a full disk image, like a virtual machine would
-have.
+First, one produces a Docker image that contains the filesystem and needed
+metadata for the application. `Dockerfile` specifies the recipe for building an
+image. Docker images consists of filesystem layers, typically extending a base
+image (for example one that contains the basic Linux tools). Layers can be
+shared between images, reducing build time and storage use.
 
 Docker container is a running instance of a image. On large services, Docker is
 used to dynamically replicate and scale services into multiple, typically
@@ -282,19 +288,23 @@ distributed containers.
 
 Often Docker images are deployed in registry (such as `docker.io`), where they
 can be found and used by anyone needing them. On this course we are not using a
-registry, but the course server rebuilds the image based on student git
-repositories.
+registry, but the course server builds Docker images based on student git
+repositories, and then runs them on the server, so that they are accessible by
+client implementations.
 
 On most systems, easiest way to get Docker in a local system is to install
-[Docker Desktop](https://docs.docker.com/desktop/), that comes also with the
-command line tools mentioned below.
+[Docker Desktop](https://docs.docker.com/desktop/) that is available in Windows,
+Mac and Linux. Docker desktop provides a graphical user interface for managing
+the containers in the local desktop system, but also comes with the command line
+tools discussed below.
 
 ### Building a Docker image
 
-Below is an example of a `Dockerfile` that has the **builder part** for building a
-binary server application from a Rust source code, and **runtime part** that
+Below is an example of a `Dockerfile` that has the **builder part** for building
+a binary server application from a Rust source code, and **runtime part** that
 runs the binary server application, opening TCP port 1234 for connections from
-the outside world.
+the outside world. You should be able to adapt it quite easily to fit your
+project.
 
 ```dockerfile
 # Build the Rust server application.
@@ -308,7 +318,7 @@ COPY ./ ./
 
 # Build the server in release mode for better performance (inside the container).
 # In this case, the server is located in a separate 'server' package under
-# the Rust project.
+# the Rust workspace. We do not need to include the client in the container.
 RUN cargo build -p server --release
 
 
@@ -351,21 +361,91 @@ applications.
 
 ### Using Docker
 
-_TODO: docker ps, docker logs, stopping container, running commands inside
-container_
+Even though Docker Desktop offers a graphical user interface for operating
+containers in the local system, below are shortly described the most important
+command line operations you might find useful.
 
-## Rust project management
+To list all currently running containers:
 
-_TODO: Packages, crate dependencies_
+    docker ps
 
-## Assignment
+In the container list you can see the container ID and container name that can
+be used to address different container operations.
+
+To see the container logs:
+
+    docker logs container-name
+
+The logs show the output the program(s) inside the container have printed to
+standard output. In a long-running server implementation, the length of the logs
+grows over time. Therefore, especially for interactive debugging the following
+can be useful:
+
+    docker logs --tail 100 -f container-name
+
+This shows only the last 100 lines of the output, after which the terminal stays
+following the output stream until interrupted with Ctrl-C.
+
+To stop a running container:
+
+    docker stop container-name
+
+Another useful way to analyze container behavior and state in more detail is to
+execute commands inside a running container in the following way, e.g. for
+listing the current filesystem contents:
+
+    docker exec container-name ls /app-dir
+
+You could even start an interactive shell inside the container for more detailed
+analysis:
+
+    docker exec -it container-name /bin/sh
+
+The `-i` option keeps the container's standard input open, i.e., you can type
+input to it. The `-t` option allocates a pseudo-terminal for the container,
+making the session behave like an interactive terminal.
+
+## Rust project organization and workspaces
+
+Previous course section already briefly mentioned the concept of modules and
+packages in a Rust project, an we will next discuss (and propose) a structure
+for organizing a client/server Rust project as two packages in a shared
+workspace. Each package has a separate `Cargo.toml` file, and builds into a
+separate binary. In many projects some packages could be libraries needed as
+part of a larger software, and other packages could be binaries using these
+libraries. We have example
+"**[project-template](https://github.com/PasiSa/pronets/tree/main/examples/project-template)**"
+presenting this setup that you can use as a basis for your work, if you so wish.
+
+Even though our course project will be fairly small, there are some good reasons
+to make the client and server implementations two separate packages in the same
+workspace, especially if one wants to create a graphical client. Our example
+uses the **[Slint](https://slint.dev/)** GUI framework for the user interface,
+and the needed crates (libraries) need to be included as dependencies for the
+client implementation in its
+[Cargo.toml](https://github.com/PasiSa/pronets/blob/main/examples/project-template/client/Cargo.toml),
+but they would be useless at the server. Similarly, the server package may need
+some crates that are not needed at the client. On the other hand, having the two
+related applications in the same workspace connects them together, and allows
+sharing some common code, e.g. for message parsing in the same git repository.
+
+The client example also shows how a package can include external
+crates/libraries in the
+[Cargo.toml](https://github.com/PasiSa/pronets/blob/main/examples/project-template/client/Cargo.toml)
+file, so that they are automatically fetches from the Rust crate registry
+("[crates.io](https://crates.io/)"). Usually one wants to specify a minimal (or
+exact) version to use. Some larger libraries are divided into specific
+selectable "features" that help in reducing the final binary size for features
+not needed.
 
 <div class="assignment-frame" markdown="1">
 
+## Assignment
+
 We now start developing network software project in the git repository created
 in the beginning of the course. It is recommended that you include the client
-and server implementations in the same repository and same Rust project, as
-separate packages as described above.
+and server implementations in the same repository and same Rust project
+workspace, as separate packages as described above.
 
 **Part 1**: Implement a simple server that listens to incoming connections at
 the port assigned for you. At this point the server recognizes only one type of
@@ -375,7 +455,7 @@ alive and responsive.
 Our message structure, that also the TST message applies is as follows:
 
 - The message starts by an **32-bit unsigned integer** that indicates the
-  **message length**. The integer must be in big-endian network byte order (see
+  **message length**. The integer must be in **big-endian** network byte order (see
   previous module how to do this). The length covers whe length of the whole
   message, including the length field itself and the identifier number.
 
@@ -393,7 +473,9 @@ client, using the same length and message identifier.
 that you can test the server.
 
 **Part 3**: Add **Dockerfile** to your project that builds the server and starts
-it.
+it. The Dockerfile should be at the root of your git repository, and be named
+"`Dockerfile`" so that our course server can find it for building the image at
+the server.
 
 After the Dockerfile is created and you have tested that the server works, it is
 time to push your work to your git server repository.
@@ -409,6 +491,7 @@ the following fields:
   assignments and project.
 - **"ports"**: The port number(s) that the server listens for connections. For
   now there is only one port in string format.
+- **"protocol"**: The protocol identifier and protocol, e.g. "`base-1`".
 
 Note that the structure is same as with the "`/fetch-git`" endpoint developed in
 last assignment, with one additional field.

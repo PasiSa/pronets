@@ -36,9 +36,9 @@ The examples are as follows:
 ## Project template
 
 - **[project-template](https://github.com/PasiSa/pronets/tree/main/examples/project-template)**:
-  An example project template composed of two Rust packages for client and
-  server applications. It also shows how the Slint UI framework is used for
-  window-based client GUI.
+  An example project template of a Rust workspace divided into two Rust packages
+  for client and server applications. It also shows how the Slint UI framework
+  is used for window-based client GUI.
 
 ## Different server variants
 
