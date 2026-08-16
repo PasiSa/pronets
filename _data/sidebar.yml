@@ -8,10 +8,6 @@
 #  url: /tabs/about/
 #  icon: "fas fa-info-circle"
 
-#- title: Exercise Environment
-#  url: /environment/
-#  icon: "fas fa-gear"
-
 - title: Content
   icon: "fas fa-angles-down"
   children:
@@ -21,36 +17,7 @@
       url: /rust-basics/
     - title: 3. Server programming
       url: /server/
-    - title: 4. Protocol design
-      url: /protocol/
-    - title: 5. Testing
-      url: /testing/
-    - title: 6. Concurrency
-      url: /concurrency/
-    - title: 7. Security
-      url: /security/
 
 - title: Code Examples
   url: /examples/
   icon: "fas fa-code"
-
-# - title: Assignments
-#  url: /assignments/
-#  icon: "fas fa-pen"
-#  children:
-#    - title: Simple Client
-#      url: /assignments/task-cli/
-#    - title: TCP Server
-#      url: /assignments/task-srv/
-#    - title: Data Transfer using UDP
-#      url: /assignments/task-udp/
-#    - title: Experimenting with QUIC
-#      url: /assignments/task-quic/
-#    - title: IP Tunnel
-#      url: /assignments/task-tun/
-#    - title: eBPF traffic monitoring
-#      url: /assignments/task-ebpf/
-
-#- title: Wireshark
-#  url: /wireshark/
-#  icon: "fas fa-hat-wizard"
