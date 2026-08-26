@@ -1,0 +1,22 @@
+{% comment %}
+  Emit language alternatives for pages connected by translation_key.
+  Finnish articles can be added to _fi_articles without changing this include.
+{% endcomment %}
+{% if page.translation_key %}
+  <link rel="alternate" hreflang="{{ page.lang | default: site.lang }}" href="{{ page.url | absolute_url }}">
+
+  {% assign translation_candidates = site.pages | concat: site.articles | concat: site.fi_articles %}
+  {% for candidate in translation_candidates %}
+    {% if candidate.translation_key == page.translation_key and candidate.url != page.url %}
+      <link rel="alternate" hreflang="{{ candidate.lang | default: site.lang }}" href="{{ candidate.url | absolute_url }}">
+    {% endif %}
+  {% endfor %}
+
+  {% assign english_candidate = translation_candidates
+    | where: 'translation_key', page.translation_key
+    | where: 'lang', 'en'
+    | first %}
+  {% if english_candidate %}
+    <link rel="alternate" hreflang="x-default" href="{{ english_candidate.url | absolute_url }}">
+  {% endif %}
+{% endif %}

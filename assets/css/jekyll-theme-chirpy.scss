@@ -20,6 +20,24 @@
   margin-bottom: 0 !important;
 }
 
+#sidebar .language-toggle {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid currentColor;
+  border-radius: 0.35rem;
+  color: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.65rem;
+  text-align: center;
+  text-decoration: none;
+}
+
+#sidebar .language-toggle:hover,
+#sidebar .language-toggle:focus-visible {
+  color: var(--sidebar-active-color);
+}
+
 .collapse {
   height: 0;            /* collapsed */
   overflow: hidden;     /* hide contents */

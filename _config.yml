@@ -168,6 +168,9 @@ collections:
   articles:
     output: true
     permalink: /articles/:path/:title/
+  fi_articles:
+    output: true
+    permalink: /fi/:path/:title/
 
 defaults:
   - scope:
@@ -178,6 +181,15 @@ defaults:
       comments: false
       toc: true
       permalink: /:title/
+  - scope:
+      path: ""
+      type: fi_articles
+    values:
+      layout: post
+      lang: fi-FI
+      comments: false
+      toc: true
+      permalink: /fi/:title/
   - scope:
       path: "examples"
       name: "README.md"

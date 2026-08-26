@@ -1,5 +1,7 @@
 ---
 layout: home
+lang: en
+translation_key: home
 ---
 
 # Programming Networked Systems course
@@ -31,15 +33,11 @@ The course material contains the following sections:
 1. [Introduction and basic network tools](intro/)
 1. [Rust basics and client sockets](rust-basics/)
 1. [Server sockets and Docker containers](server/)
-1. [Protocol design and project grouping](protocol/)
+1. [Protocol design and project kickoff](protocol/)
 1. [Testing and observability](testing/)
 1. [Concurrency and asynchronous programming](concurrency/)
 1. [Security](security/)
 1. UDP and real-time transport
-1. Advanced topics
-
-In addition, the course will have interoperability hackathon weeks and final
-demo.
 
 **About the use of AI**: On this course there are no restrictions to using AI
 tools for developing the program code, as long as you make sure to review and

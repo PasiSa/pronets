@@ -1,0 +1,11 @@
+- title: Etusivu
+  url: /fi/
+  icon: "fas fa-home"
+
+- title: Sisältö
+  icon: "fas fa-angles-down"
+  children: []
+
+- title: Koodiesimerkit
+  url: /examples/
+  icon: "fas fa-code"
