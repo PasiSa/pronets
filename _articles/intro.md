@@ -34,7 +34,7 @@ relevant to understand when going forward with this course.
 
 ## Overview of the course
 
-The course is divided into 9 modules with dedicated topics. In most modules you
+The course is divided into 8 modules with dedicated topics. In most modules you
 will work towards a client-server project of a chosen topic and enhance it
 according to the theme of the module. Typically, in each module you will need to
 implement some new code (or modify earlier code), and do a written assignment
@@ -88,35 +88,80 @@ APIs. We will learn to use **JSON web tokens** for authentication and
 authorization between clients and server.
 
 **Module 8** discusses **UDP and real-time communication**. You will add a
-real-time component to your software that uses UDP instead of TCP. **Module 9**
-is left for advanced topics.
+real-time component to your software that uses UDP instead of TCP. We discuss
+also some other related advanced topics not yet covered earlier in the course.
 
 ## Internet Protocol (IP)
 
 Network devices are connected to the global Internet using the IP protocol.
-There are two versions of the protocol, the old version, IPv4 is still widely
-used in most locations. It has its limitations however, particularly, only 32
-bits are available for IPv4 address, which is not sufficient for present day
-needs. IPv6 was developed, with 128-bit addresses. Its deployment has taken
-time, however. Currently about 40% of Internet traffic uses IPv6, according to
-[Cloudflare's Radar service](https://radar.cloudflare.com/). There are
+There are two versions of the protocol. The old version, **IPv4** is still
+widely used in most locations. It has its limitations however: foremost, only 32
+bits (about 4 billion possible different values) are available for IPv4 address,
+which causes challenges for present day needs. To address the shortcomings of
+the old protocol, **IPv6** was later developed, with 128-bit addresses (and some
+other enhancements). Its deployment has taken time: it is far from easy to
+migrate to a new protocol that is at the core of different end-hosts, network
+routers and other devices. In practice IPv6 and IPv4 addresses live side by side
+on different network devices: a device capable of using IPv6 can also use IPv4
+on some connections, if the network path or communication peer does not support
+the newer protocol. Currently about 40% of Internet traffic uses IPv6, according
+to [Cloudflare's Radar service](https://radar.cloudflare.com/). There are
 differences in deployment based on the global region, though.
 
-The below text gives some reference to RFC documents related to discussed
-protocols. RFCs are the specifications of the Internet protocols, specified by
-the **[Internet Engineering Task Force (IETF)](https://www.ietf.org/)**. The
-IETF standardization process is open and public, and participation is possible
-for anyone.
+IP and other internet protocols are specified in RFC documents, and we provide
+references to them at related places in this material. RFCs are specified by the
+**[Internet Engineering Task Force (IETF)](https://www.ietf.org/)**. The IETF
+standardization process is open and public, and participation is possible for
+anyone.
+
+### About packet transmission
+
+The messages and communication sent and received by networked applications are
+split into packets by the underlying operating system. Packets are delivered
+independently over the network, and are subject to queueing and other kinds of
+delays, and may be lost during transmission, typically because of congestion
+somewhere in the network.
+
+The maximum size of an IP packet is called the **Maximum Transmission Unit
+(MTU)**. MTU depends on the characteristics of the underlying link layer
+technology. Over the years, the IEEE 802 family of local network protocols, such
+as Ethernet (802.3) and different generations of Wi-Fi (802.11) have been
+popularly used. These protocols support MTU of 1500 bytes, which therefore has
+become very common in all IP communication. Considering the large amounts of
+data transmitted by today's applications, and the fast transmission speeds
+possible in today's networks, this is quite small unit, and typically computer
+connected to network needs to handle thousands of packets in very small time (as
+you will see when getting familiar with Wireshark network analyzer in a moment).
+
+**Internet Control Message Protocol (ICMP)** is used to deliver different kinds
+of diagnostics and error messages, such as "Packet too Big" in the
+above-described case, or "Destination unreachable" if the packet cannot be
+delivered to destination. ICMP is also used commonly by the **ping** tool, to
+test that the destination is reachable, and to measure the round-trip delay to
+destination. _Ping_ sends series of _ICMP Echo Request_ messages that trigger
+_ICMP Echo Response_ at the receiver.
 
 ### Addressing
 
-IP packets carry source and destination addresses in their protocol header.
-There are different kinds of addresses, based on the scope they are used.
-Typically a computer machine can have multiple IP addresses in use at the same
-time, for different scopes, and because it might be connected to multiple
-networks. A common case example is a wireless device that can have both WiFi and
-cellular 5G device interfaces. These are typically assigned a separate IP
-address. A host can also have IPv4 and IPv6 addresses in use at the same time.
+IP packets carry (either IPv4 or IPv6) source and destination addresses in their
+protocol header. There are different kinds of addresses, based on the scope they
+are used. Commonly a device connected to Internet can have multiple IP addresses
+in use at the same time, for different reasons:
+
+- Each **network interface** (or network device) has a separate IP address. For
+  example, a wireless device may have both 5G radio interface (connected to one
+  service provider), and a Wi-Fi interface (possibly connected to different
+  network provider), so they have separate IP addresses, and packets for the two
+  different addresses take a different route to the destination.
+- Virtual machines or containers have **virtual network interfaces** that
+  logically also have a separate IP address. Often these IP addresses are
+  assigned from a private address scope (discussed more in a moment): they
+  cannot be forwarded to the Internet as such, but need to be **translated**
+  into a global IP address along the way.
+- Even if a network interface is assigned a globally routable IP address, it may
+  have alternative addresses, for example for private communication inside
+  organizations local network.
+- If the host supports both IPv4 and IPv6, both kinds of addresses are assigned.
 
 The common notation used for IPv4 addresses is by four 8-bit decimal numbers
 separated by space, e.g. **151.101.245.91** for _www.aalto.fi_. IPv6 addresses
@@ -127,7 +172,7 @@ either using IPv4 or IPv6). This IPv6 address is the same as
 zeros can be compressed into double colon, for convenience.
 
 IP addresses are split into two parts. The most significant part stands for
-network prefix and is shared by all hosts in the same local network. The least
+**network prefix** and is shared by all hosts in the same local network. The least
 significant bits separate the different hosts in the network. Each host must
 have different address and there must not be overlaps. **Classless Inter-Domain
 Routing** indicates the network prefix and its length in the following way:
@@ -179,38 +224,19 @@ Wikipedia article on [IPv4](https://en.wikipedia.org/wiki/IPv4) or [IPv6
 addresses](https://en.wikipedia.org/wiki/IPv6_address) discusses more about
 these.
 
-### About packet transmission
-
-Even thought there are many kinds of link layer protocols with varying
-characteristics, commonly the IP packets are transmitted over one of the IEEE
-802 Local Area Network protocols, for example the fixed Ethernet (802.3) or
-Wireless LAN / WiFi (802.11), which commonly assume 1500-byte IP packets. This
-is called the **Maximum Transmission Unit (MTU)**. If there are links along the
-communication path that assume smaller packets, the IP packets either need to
-fragmented into multiple pieces, or a router needs to send a notification the
-packet sender requesting smaller MTU for that destination. The latter is more
-common in current Internet, because fragmentation is harmful for performance.
-Because 1500 bytes is very common MTU, in many cases this is not needed.
-
-**Internet Control Message Protocol (ICMP)** is used to deliver different kinds
-of diagnostics and error messages, such as "Packet too Big" in the
-above-described case, or "Destination unreachable" if the packet cannot be
-delivered to destination. ICMP is also used commonly by the **ping** tool, to
-test that the destination is reachable, and to measure the round-trip delay to
-destination. _Ping_ sends series of _ICMP Echo Request_ messages that trigger
-_ICMP Echo Response_ at the receiver.
-
 ## Transmission Control Protocol (TCP)
 
 On top of IP, the **TCP protocol ([RFC
 9293](https://datatracker.ietf.org/doc/html/rfc9293) /
 [Wikipedia](https://en.wikipedia.org/wiki/Transmission_Control_Protocol))** is
 most commonly used to set up a reliable communication pipe between two Internet
-hosts. TCP provides an abstraction of reliable byte stream to the upper protocol
-layers. It does not preserve the message boundaries as sent by the application,
-which needs to be considered when designing the application communication
-operations. Applications just send data first to TCP's send buffers, from which
-TCP then splits them into segments based on the network MTU.
+hosts. TCP provides an abstraction of **reliable byte stream** to the upper
+protocol layers. It **does not preserve the message boundaries** as sent by the
+application, which needs to be considered when designing the application
+communication operations. When an application sends data using one of the socket
+API's send functions, it is first copied to the operating system's socket send
+buffers for further processing. The operating system then splits the data into
+packets, and processes them according to the TCP protocol rules.
 
 TCP is a connection-oriented protocol between two end points: connection needs
 to be opened first by the client to a specified IP address and TCP port, before
@@ -222,7 +248,9 @@ either end can send data independently, although a common pattern is that the
 client starts the conversation (e.g. in HTTP protocol).
 
 Like IP address, the 16-bit TCP port is specified for both ends of the
-connection, and is used to separate different TCP connections between hosts. The
+connection, and is used to separate different TCP connections between hosts,
+and to route the packets to the right socket and right application inside
+the host. The
 server-side port is also used to as well-known identifier for a particular
 Internet service. For example, ports 80 and 443 are assigned for insecure and
 secure HTTP protocol (i.e., web transfer), and port 25 has been used for the
@@ -231,10 +259,10 @@ managed by the **[Internet Assigned Numbers Authority
 (IANA)](https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml)**.
 Typically, when viewing TCP packets in a network trace, the server-side port
 indicates the service that is used for the connection, but the client side port
-seem random, typically a number above 48000, which is the number range reserved
-for automatically chosen client ports. Typically client implementations do not
-choose the client port, but the operating system automatically chooses an
-available one (but it is also possible to manually select it).
+is seemingly random, typically a number above 48000, as assigned automatically by
+the client-side system. Typically client implementations do not
+choose the local port, but the operating system automatically chooses an
+available one.
 
 There is delay in delivering packets between client and server. In addition to
 the limitations of the physical world (propagation delay and delay of processing
@@ -250,69 +278,76 @@ application designer needs to take into account.
 ## User Datagram Protocol (UDP)
 
 **User Datagram Protocol (UDP)** is a simple protocol format on top of IP
-packets to send fixed-size datagrams to a destination. As with TCP, in addition
-to IP address, the destination is identified by a 16-bit UDP port. Compared to
-TCP, UDP is very simple: it is unreliable, connectionless, and stateless and
-does not make guarantees of data delivery. Application can just start sending
-UDP datagrams, but does not know if they reach anywhere, unless the receiving
-application sends something back. Due to its properties, UDP can be used for
-lightweight signaling where reliability is not required, or real-time streaming
-uses such as audio/videoconferencing or online games, where variable delays are
-more harmful than a possible data loss. Because of its connectionless
-properties, UDP can also be used for IP broadcast and IP multicast such that
-single IP packet will have multiple receivers. This is useful, e.g. for service
-discovery in the local network.
+packets to send fixed-size datagrams to a destination. We will cover UDP
+communication later in the course, but here is a short overview. Also UDP uses
+16-bit source and destination 16-bit ports to separate the communication
+sessions. Compared to TCP, UDP is very simple: it is unreliable, connectionless
+and stateless, and does not make guarantees of data delivery. Application can
+just start sending UDP datagrams, but does not know if they reach anywhere,
+unless the receiving application sends something back and there is some
+application logic to acknowledge the data delivery somehow. Due to its
+properties, UDP can be used for lightweight signaling where reliability is not
+required, or for real-time streaming uses such as audio/videoconferencing and
+online games, where variable delays are more harmful than a possible data loss.
+Because of its connectionless properties, UDP can also be used for IP broadcast
+and IP multicast such that single IP packet will have multiple receivers, and
+the sender does not even know the current set of possible receivers. This is
+useful, e.g. for service discovery in the local network.
 
-## Domain Name System
+## Domain Name System (DNS)
 
-Well-know ports are also specified for UDP, and perhaps the most commonly used
-is port 53, that is assigned for the **Domain Name System** ([Wikipedia
-article](https://en.wikipedia.org/wiki/Domain_Name_System)). Domain name system
-is a hierarchically organized name database that can map the domain names into
-IPv4 addresses, IPv6 addresses or certain commonly used network services.
-Technically it is an application on top of UDP and IP, but it is so inherently
-built into many of the current network APIs, that this distinction is not always
-very obvious to application programmer, not to mention the users of the
-application.
+The most common application for the UDP protocol is the **Domain Name System**
+([Wikipedia article](https://en.wikipedia.org/wiki/Domain_Name_System)). It uses
+well-known UDP port 53. The Domain Name System is a hierarchically organized
+name database that can map the domain names into IPv4 addresses or IPv6
+addresses. There are also different types **resource record** types pointing to
+authoritative name server of a domain (NS), canonical names (or name aliases,
+CNAME), or for example the mail exchange (MX) address used by the domain, and
+many others. Technically DNS is a separate application on top of UDP and IP, but
+in practice it is so inherent part of all networking that for example, many of
+the network APIs assume its availability.
 
-Normally, when client wants to connect to particular network server, it does not
-know its IP address. Therefore, before opening the TCP connection, the client
-system needs to make a DNS query, where it indicates the name of the system it
-wants to connect, e.g. "**www.aalto.fi**". The client also indicates the type of
-query it wants to make, for example an **'A' query** asks for an IPv4 address
-corresponding to a name, and **'AAAA' query** asks for an IPv6 address
-corresponding to a name. Each system may have multiple IP addresses
-corresponding to a name. This feature can be used for load balancing or
-robustness through redundancy, in case some of the server are temporarily
-unreachable. These days it is also common that the client system triggers both A
-and AAAA queries at the same time, if it is not known which IP address family is
-available.
+Normally, when a client application wants to connect to particular network
+server, it does not know its IP address. Therefore, before opening the TCP
+connection, the client system needs to make a DNS query, where it indicates the
+name of the system it wants to connect to, e.g. "**www.aalto.fi**". The client
+also indicates the type of name query it wants to make, for example an **'A'
+query** asks for an IPv4 address corresponding to a name, and **'AAAA' query**
+asks for an IPv6 address corresponding to a name. Often, in the modern network
+APIs, this is integrated as part of the connect functionality, even though it is
+a separate function and message exchange.
 
-The Domain Name System is distributed, hierarchic and heavily replicated. The
-**root zone** that holds the **top-level domains (TLD)** (such as '_.fi_' or
-'_.com_' is distributed into number of root servers across the world that hold
-the **NS type resource records** for the authoritative name servers for each
-top-level domain. These authoritative name servers resolve the next level of
-domain names, until the actual IP address or other queried resource type is
-resolved.
+A system that supports both IPv4 and IPv6 communication can make two name
+queries, one for each address family, and use one of the addresses available. It
+is also possible that a single query results in multiple IPv4 or IPv6 addresses
+that the client can choose from. This is used for increased robustness, in case
+some of the servers are temporarily unavailable, or for load balancing.
+
+The Domain Name System is distributed, hierarchic and replicated to multiple
+servers. The **root zone** that holds the **top-level domains (TLD)** (such as
+'_.fi_' or '_.com_' is distributed into number of root servers across the world
+that hold the **NS type resource records** for the authoritative name servers
+for each top-level domain. These authoritative name servers resolve the
+authoritative name servers of the next level of domain names, until the actual
+IP address or other resource type can be resolved.
 
 Because the hierarchic resolution would cause delay if performed separately
-every time (each host needs many name queries in short period of time), and
-would cause burden towards the root, the names are cached along the request
-path. Quite commonly the response for a name query comes from nearby name
-server, if it represents a commonly used name. For this reason the DNS
-**resource records** also have a lifetime for how long they can be stored in the
-cache.
+every time (each name resolution needing multiple query messages in short period
+of time), and would cause burden towards the root servers, the names are cached
+along the request path. Quite commonly the response for a name query comes from
+nearby name server, if it represents a commonly used name. For this reason the
+DNS **resource records** also have a lifetime for how long they can be stored in
+the cache.
 
-It is useful to understand that a record in particular place in name hierarchy
+It is good to understand that a record in particular place in name hierarchy
 does not necessarily have any connection to how the resolved IP address is
-located in the actual network topology. For example, when writing this, name
+located in the actual network topology. For example, name
 '_www.aalto.fi_' resolves to alias (CNAME record)
 '_dualstack.n.sni.global.fastly.net_' that resolves to IPv4 address
 _151.101.245.91_ or IPv6 address _2a04:4e42:3a::347_, depending on whether we
 made a query for 'A' type record or 'AAAA' type record, hinting that Aalto web
 pages are hosted by an external web hosting service, that might actually be far
-away from the servers at Aalto campus.
+away from the servers at Aalto campus, not in Finland despite its top-level domain.
 
 The below image illustrates how the DNS resolution process typically works, and
 why it may take time to get the actual response. The picture is taken from blog
@@ -500,16 +535,16 @@ communication going on, and within a few seconds there are hundreds of packets
 captured.
 
 To actually analyze protocol behavior from the hundreds or thousands of packets,
-one needs to set a packet filter to select the interesting traffic. Wireshark
+it is useful to set a packet filter to select the interesting traffic. Wireshark
 support flexible notation for selecting packets, e.g., based on different
 protocol field values, and logical operations between multiple criteria. The
 below screenshot shows a simple selection based on UDP (source or destination)
-port 53 on the packet header. The screenshot shows the result after using _dig_
-for making an A query for _www.aalto.fi_.
+port 53 on the packet header ("_udp.port == 53_"). The screenshot shows the
+result after using _dig_ for making an A query for _www.aalto.fi_.
 
 ![Packet capture view](/images/intro-wireshark-dns.png)
 
-The top part of the window shows each matching packet on its own line: there is
+The top half of the window shows each matching packet on its own line: there is
 the DNS query packet, and the DNS response packet. I have selected the latter
 packet, and the details are shown on the bottom half of the window. On the left
 there is a readable description of the headers on different protocol layers,
@@ -519,7 +554,7 @@ as we saw in the _dig_ output.
 
 ## Using Git
 
-**[Git](https://git-scm.com/)** is the most prominently using version control
+**[Git](https://git-scm.com/)** is the most prominently used version control
 system today, and majority of current open source software projects are using
 it. If you work on any software development in future, you will almost certainly
 need to know how to use git. Also on this course we use git for maintaining the
@@ -551,15 +586,14 @@ accessible address, so that other students can test them.
 There are publicly available Git hosting services such as
 **[GitHub](https://github.com/)** and **[GitLab](https://about.gitlab.com/)**,
 that come with a web user interface for setting up and operating with the
-repositories. Particularly, if you manage a publicly accessible open source
-project such service is useful, as it offers various services for bug reporting
-and workflow management, in addition to the basic git repository service. On
-this course we primarily use Aalto's own
-**[version.aalto.fi](https://version.aalto.fi/)** service, which is based on the
-GitLab software, and can be used with the Aalto user accounts. It is missing
-some services that e.g. GitHub provides, for example related to **continuous
-integration**, and if you therefore want to use GitHub for your project, it is
-possible, if you agree about it with the course staff.
+repositories. In addition, these services come with additional tools for issue
+reporting, workflow management, continuous integration, etc., aside from the
+basic Git version management hosting. On this course we primarily use Aalto's
+own **[version.aalto.fi](https://version.aalto.fi/)** service, which is based on
+the GitLab software, and can be used with the Aalto user accounts. It is missing
+some features that e.g. GitHub provides, for example related to **continuous
+integration**. If you want to use these features in your project, you can use
+e.g. GitHub for the project, but ask this first from the course personnel.
 
 After signing in to _version.aalto.fi_, new repository can be created by
 clicking a "plus" sign on the top right part of the page. Choose "Create blank
@@ -592,9 +626,9 @@ repository to your own machine:
 
     git clone git@version.aalto.fi:psarolah/my-repo.git
 
-Where you will replace the actual URL with your correct repository. You can find
-the URL from your repository's main page, under blue "Code" button. Choose the
-**ssh** version.
+Where you will replace the actual repository address with your correct
+repository. You can find the address from your repository's main page, under
+blue "Code" button. Choose the **ssh** version.
 
 Now you should have the local copy of the README file on your machine, and you
 can start adding new files as needed in the project.
@@ -641,7 +675,7 @@ and want to synchronize the work between them.
 
 <div class="assignment-frame" markdown="1">
 
-## Assignment
+## Assignment #1
 
 The first assignment is about setting up the git repository for future tasks,
 and to get familiar with the tools discussed in this module.
@@ -653,25 +687,30 @@ questionnaire](https://mycourses.aalto.fi/mod/questionnaire/view.php?id=1528203)
 Give read permissions to the repository also to course personnel.
 
 Open Wireshark and start capturing packets from your network interface. Pick a
-well-known organization, but not Aalto University (e.g. a company, or another
+couple of well-known organizations, but not Aalto University
+(e.g. a company, or another
 university than Aalto). Take the following steps and report the outcome in your
 assignment report (submitted in MyCourses).
 
-1. Using **dig**, check if the main web page of your selected organization has only
-   IPv4 address, or if it also has IPv6 address for serving the web content. Is
-   there a CNAME record that would indicate the actual host serving the content?
+1. Using **dig**, check the IPv4 address (i.e., make an "A" query) of your
+   selected organizations, and include (all of) them in the reply. Try also if
+   the same name has IPv6 address, and report that. Is there a CNAME alias
+   record redirecting to somewhere else?
 
 2. How many DNS packets do you see in Wireshark as a results of above operation?
    Use filter for UDP port 53 to see these packets better.
 
-3. Create a HTTP request using **netcat** to TCP port 80. What kind of response
+3. Create a HTTP request using **netcat** to TCP port 80 of your selected destinations.
+   What kind of response
    do you get? What is the HTTP response code on the first line, and what does
    it mean? (You may use resources in the Internet to find this information)
 
-4. How many TCP packets were transferred back and forth to TCP port 80 as a
-   result of this operation. Explain in your own words what happened in each
-   packet. (If the HTTP response is large and spans over multiple packets, you
-   don't need to explain every packet separately)
+4. Check from Wireshark how many TCP packets were transferred back and forth to
+   TCP port 80 as a result of this operation (you may want to use another
+   filter, for TCP port 80 here). Explain in your own words how the connection
+   proceeds and what kind of TCP packets you see during the connection. What
+   flags and TCP options are used in the connection establishment handshake?
+   What do they mean? (Do some network lookup to find out)
 
 Finally, answer the following questions:
 
