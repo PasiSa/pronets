@@ -1,5 +1,7 @@
 ---
 layout: home
+lang: en
+translation_key: home
 ---
 
 # Programming Networked Systems course
@@ -36,10 +38,6 @@ The course material contains the following sections:
 1. Concurrency and asynchronous programming
 1. Security
 1. UDP and real-time transport
-1. Advanced topics
-
-In addition, the course will have interoperability hackathon weeks and final
-demo.
 
 **About the use of AI**: On this course there are no restrictions to using AI
 tools for developing the program code, as long as you make sure to review and

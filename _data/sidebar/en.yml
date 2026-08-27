@@ -1,12 +1,6 @@
-# _data/sidebar.yml
-
 - title: Home
   url: /
   icon: "fas fa-home"
-
-#- title: About
-#  url: /tabs/about/
-#  icon: "fas fa-info-circle"
 
 - title: Content
   icon: "fas fa-angles-down"

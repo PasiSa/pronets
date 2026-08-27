@@ -1,8 +1,16 @@
 <!-- The Side Bar -->
 
 <aside aria-label="Sidebar" id="sidebar" class="d-flex flex-column align-items-end">
+  {% assign current_lang = page.lang | default: site.lang %}
+  {% assign sidebar_items = site.data.sidebar[current_lang] | default: site.data.sidebar.en %}
+  {% if current_lang == 'fi-FI' %}
+    {% assign home_url = '/fi/' %}
+  {% else %}
+    {% assign home_url = '/' %}
+  {% endif %}
+
   <header class="profile-wrapper">
-    <a href="{{ '/' | relative_url }}" id="avatar" class="rounded-circle">
+    <a href="{{ home_url | relative_url }}" id="avatar" class="rounded-circle">
       {%- if site.avatar != empty and site.avatar -%}
         {%- capture avatar_url -%}
           {% include media-url.html src=site.avatar %}
@@ -11,14 +19,14 @@
       {%- endif -%}
     </a>
 
-    <a class="site-title d-block" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+    <a class="site-title d-block" href="{{ home_url | relative_url }}">{{ site.title }}</a>
     <p class="site-subtitle fst-italic mb-0">{{ site.tagline }}</p>
   </header>
   <!-- .profile-wrapper -->
 
   <nav class="flex-column flex-grow-1 w-100 ps-0">
     <ul class="nav">
-      {% for item in site.data.sidebar %}
+      {% for item in sidebar_items %}
         {% if item.children %}
           <li class="nav-item">
             <a class="nav-link" href="#submenu-{{ forloop.index }}" role="button" aria-expanded="false" aria-controls="submenu-{{ forloop.index }}">
@@ -43,7 +51,42 @@
     </ul>
   </nav>
 
+  {% assign translation_candidates = site.pages | concat: site.articles | concat: site.fi_articles %}
+  {% assign translated_page = nil %}
+  {% if page.translation_key %}
+    {% for candidate in translation_candidates %}
+      {% if candidate.translation_key == page.translation_key and candidate.url != page.url %}
+        {% assign translated_page = candidate %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
   <div class="sidebar-bottom d-flex flex-wrap  align-items-center w-100">
+    {% if current_lang == 'fi-FI' %}
+      {% assign language_url = translated_page.url | default: '/' %}
+      <a
+        class="language-toggle"
+        href="{{ language_url | relative_url }}"
+        lang="en"
+        hreflang="en"
+        aria-label="Vaihda kieleksi englanti"
+        title="English"
+      >FI</a>
+    {% else %}
+      {% assign language_url = translated_page.url | default: '/fi/' %}
+      <a
+        class="language-toggle"
+        href="{{ language_url | relative_url }}"
+        lang="fi"
+        hreflang="fi-FI"
+        aria-label="Switch language to Finnish"
+        title="Suomi"
+      >EN</a>
+    {% endif %}
+
+    <span class="icon-border"></span>
+
     {% unless site.theme_mode %}
       <button type="button" class="btn btn-link nav-link" aria-label="Switch Mode" id="mode-toggle">
         <i class="fas fa-adjust"></i>
