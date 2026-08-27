@@ -29,7 +29,7 @@ kuten kirjoitusvirheistä, voit tehdä myös pull requestin GitHubissa.
 
 Kurssimateriaali koostuu seuraavista osioista:
 
-1. [Johdanto ja verkon perustyökalut](../intro/)
+1. [Johdanto ja verkon perustyökalut](intro/)
 1. Rustin perusteet ja asiakaspistokkeet
 1. Palvelinpistokkeet ja Docker-kontit
 1. Protokollasuunnittelu ja projektien aloitus

@@ -1,5 +1,7 @@
 ---
 title: Introduction
+lang: en
+translation_key: intro
 ---
 
 This module covers the computer networking
@@ -15,7 +17,7 @@ relevant to understand when going forward with this course.
 
 - You will get a **refresher on how TCP, UDP and IP basics work** and how IP
   addresses are assigned. These may be familiar from earlier courses already,
-  but it does not refresh your memory on them.
+  but it does not harm to have a refresh on the topics.
 
 - You will **learn basics of Domain Name System (DNS) service**. It is arguably
   the most important service in the Internet, and without it the Internet would
@@ -34,7 +36,7 @@ relevant to understand when going forward with this course.
 
 ## Overview of the course
 
-The course is divided into 8 modules with dedicated topics. In most modules you
+The course is divided into eight modules with dedicated topics. In most modules you
 will work towards a client-server project of a chosen topic and enhance it
 according to the theme of the module. Typically, in each module you will need to
 implement some new code (or modify earlier code), and do a written assignment
@@ -50,11 +52,12 @@ analysis tools, and introduce the **Git version control system** that will be
 used to manage the projects during the course. You will practice the use of
 **Wireshark** and and **netcat** for a simple HTTP interaction.
 
-**Module 2** starts with introduction to basic concepts of the **Rust programming
-language** that is used in examples throughout the course, and which we recommend
-to use also in the assignments. Using Rust you will implement a simple TCP
-client application that makes a HTTP request, and you will do a small practice
-assignment interacting with our course server used during the course.
+**Module 2** starts with introduction to basic concepts of the **Rust
+programming language** that is used in examples throughout the course, and which
+is recommended also in the project and assignments. Using Rust you will
+implement a simple TCP client application that makes a HTTP request, and you
+will do a small practice assignment interacting with our course server used
+during the course.
 
 In **Module 3** you will implement a basic TCP server using Rust, without yet paying
 much attention to efficient handling of multiple concurrent clients or
@@ -68,8 +71,7 @@ during rest of the course. You have some freedom to choose the topic and details
 of the implementation, but all projects need to follow certain protocol
 principles and common protocol messages documented in this module. This allows
 some form of interoperability testing between different projects that are
-deployed as Docker containers on our course server. You will implement some of
-these core messages in your project implementation.
+deployed as Docker containers on our course server.
 
 **Module 5** is focused on testing and observing the implementation behavior
 and performance. We will get familiar with the testing framework provided by
@@ -97,15 +99,16 @@ Network devices are connected to the global Internet using the IP protocol.
 There are two versions of the protocol. The old version, **IPv4** is still
 widely used in most locations. It has its limitations however: foremost, only 32
 bits (about 4 billion possible different values) are available for IPv4 address,
-which causes challenges for present day needs. To address the shortcomings of
-the old protocol, **IPv6** was later developed, with 128-bit addresses (and some
-other enhancements). Its deployment has taken time: it is far from easy to
-migrate to a new protocol that is at the core of different end-hosts, network
-routers and other devices. In practice IPv6 and IPv4 addresses live side by side
-on different network devices: a device capable of using IPv6 can also use IPv4
-on some connections, if the network path or communication peer does not support
-the newer protocol. Currently about 40% of Internet traffic uses IPv6, according
-to [Cloudflare's Radar service](https://radar.cloudflare.com/). There are
+which is not sufficient for today's needs, if every node was given a dedicated
+address, as originally planned. To address the shortcomings of the old protocol,
+**IPv6** was later developed, with 128-bit addresses (and some other
+enhancements). Its deployment has taken time: it is far from easy to migrate to
+a new protocol that is at the core of different end-hosts, network routers and
+other devices. In practice IPv6 and IPv4 addresses live side by side on
+different network devices: a device capable of using IPv6 can also use IPv4 on
+some connections, if the network path or communication peer does not support the
+newer protocol. Currently about 40% of Internet traffic uses IPv6, according to
+[Cloudflare's Radar service](https://radar.cloudflare.com/). There are
 differences in deployment based on the global region, though.
 
 IP and other internet protocols are specified in RFC documents, and we provide
@@ -134,12 +137,12 @@ connected to network needs to handle thousands of packets in very small time (as
 you will see when getting familiar with Wireshark network analyzer in a moment).
 
 **Internet Control Message Protocol (ICMP)** is used to deliver different kinds
-of diagnostics and error messages, such as "Packet too Big" in the
-above-described case, or "Destination unreachable" if the packet cannot be
-delivered to destination. ICMP is also used commonly by the **ping** tool, to
-test that the destination is reachable, and to measure the round-trip delay to
-destination. _Ping_ sends series of _ICMP Echo Request_ messages that trigger
-_ICMP Echo Response_ at the receiver.
+of diagnostics and error messages, such as "Packet too Big" if host tries to
+send a larger packet than supported on the network path, or "Destination
+unreachable" if the packet cannot be delivered to destination. ICMP is also used
+commonly by the **ping** tool, to test that the destination is reachable, and to
+measure the round-trip delay to destination. _Ping_ sends series of _ICMP Echo
+Request_ messages that trigger _ICMP Echo Response_ at the receiver.
 
 ### Addressing
 
@@ -285,14 +288,16 @@ sessions. Compared to TCP, UDP is very simple: it is unreliable, connectionless
 and stateless, and does not make guarantees of data delivery. Application can
 just start sending UDP datagrams, but does not know if they reach anywhere,
 unless the receiving application sends something back and there is some
-application logic to acknowledge the data delivery somehow. Due to its
-properties, UDP can be used for lightweight signaling where reliability is not
-required, or for real-time streaming uses such as audio/videoconferencing and
-online games, where variable delays are more harmful than a possible data loss.
-Because of its connectionless properties, UDP can also be used for IP broadcast
-and IP multicast such that single IP packet will have multiple receivers, and
-the sender does not even know the current set of possible receivers. This is
-useful, e.g. for service discovery in the local network.
+application logic to acknowledge the data delivery somehow. Unlike TCP, UDP does
+preserve the application-level message boundaries. Due to its properties, UDP
+can be used for lightweight signaling where reliability is not required, or for
+real-time streaming uses such as audio/videoconferencing and online games, where
+variable delays are more harmful than a possible data loss. Because of its
+connectionless properties, UDP can also be used for IP broadcast and IP
+multicast such that single IP packet will have multiple receivers, and the
+sender does not even know the current set of possible receivers. This is useful,
+e.g. for service discovery (e.g. for a printer) in the local network, and
+finding its IP address.
 
 ## Domain Name System (DNS)
 
@@ -376,22 +381,23 @@ capture and examine the packets transmitted by network applications.
 Dig and Netcat are command-line tools. On Linux, they can be run in a terminal
 and installed with the system's package manager if they are not already
 available. On Mac, they can be run in the **Terminal** application and are
-included in the standard installation. On Windows, the commands in this
-material should be run in a Linux terminal provided by **Windows Subsystem for
-Linux (WSL)**. Wireshark is a graphical application and must be installed
+included in the standard installation. On Windows, the recommended approach is
+to install **Windows Subsystem for Linux (WSL)** offers Linux virtual machine
+for Windows users, although similar tools are also available for Windows's
+PowerShell. Wireshark is a graphical application and must be installed
 separately on Linux, macOS, or Windows.
 
 ### The 'Dig' tool
 
-**Dig** (Domain Information Groper) is a command-line tool for making DNS
+**Dig** is a command-line tool for making DNS
 queries. It shows both the records returned by a DNS server and information
 about the query, such as its response status and duration. The most relevant
 part of the output is usually the `ANSWER SECTION`, which lists the matching
-resource records and their time-to-live (TTL) values.
+resource records and their time-to-live (TTL) values (in seconds).
 
-The basic command takes a domain name and, optionally, the requested record
-type. For example, here is an example of IPv4 query for `www.aalto.fi` and a
-possible response:
+In its simplest form, the command takes a domain name and, optionally, the
+requested record type. For example, here is an example of IPv4 query for
+`www.aalto.fi` and a possible response:
 
 ```bash
 $ dig www.aalto.fi A
@@ -425,9 +431,11 @@ The above shows the content of received DNS response in a UDP packet. It says:
 - The first record is of **CNAME** type. This represents an alias to a
   **canonical DNS name** of the server that actually serves the data for
   _www.aalto.fi_. We see from the canonical name that the web content is
-  actually served by company called [Fastly](https://www.fastly.com/). Lifetime
-  of this record entry is 373 seconds. The DNS records are cached to reduce the
-  number of actual request messages sent, and this information is used by caches.
+  actually served by company called [Fastly](https://www.fastly.com/) (These
+  days it is common that content provider service is outsourced to a specialized
+  company). Lifetime of this record entry is 373 seconds. The DNS records are
+  cached to reduce the number of actual request messages sent, and this
+  information is used by caches.
 - The second record is the actual IPv4 address for
   _dualstack.n.sni.global.fastly.net_, with 27 seconds of lifetime. This
   lifetime is shorter, because the operators often do load balancing in their
@@ -497,7 +505,9 @@ Netcat server can be started with the `-l` option at a particular port:
 nc -l 6000
 ```
 
-This starts a TCP server socket that listens for incoming connections at port 6000.
+This starts a TCP server socket that listens for incoming connections at port
+6000, and when connection is established starts sharing content between the
+socket and terminal, as described above.
 
 Now, if you open another terminal window and connect to the localhost address,
 port 6000, you can start communication session between the client and server
@@ -607,9 +617,9 @@ just click "Create project".
 ### Setting up ssh keys
 
 Git is mainly used from command line, although the IDE development environments
-provide graphical user interface for common operations. Your local command line
-communicates with the public server using **ssh** protocol, that is often used
-for remote shell access, but can also be used as authenticates secure
+provide graphical user interface for common operations. Your local git client
+communicates with the public server usually using the **ssh** protocol, that is
+often used for remote shell access, but can also be used as authenticates secure
 communication channel between systems.
 
 To use ssh, you'll need to create a key pair for authentication, with the public
@@ -622,7 +632,7 @@ is done. Follow those.
 ### Cloning the repository
 
 After the keys have been set up, you should be able to clone a copy of the
-repository to your own machine:
+repository you just created to your own machine:
 
     git clone git@version.aalto.fi:psarolah/my-repo.git
 
@@ -650,7 +660,8 @@ You mark the files you want to commit by
     git add <file1> <file2>...
 
 These include also new files. If you have added new subdirectories, just mark
-the files inside them.
+the files inside them. If you are using VS Code, pressing the '+' icon on the
+Git view does the same thing (the file moves to "Staged changes" section).
 
 Then you make the actual commit event:
 
@@ -686,11 +697,15 @@ created the repository, and you have tested that it works, report its URL in the
 questionnaire](https://mycourses.aalto.fi/mod/questionnaire/view.php?id=1528203).
 Give read permissions to the repository also to course personnel.
 
-Open Wireshark and start capturing packets from your network interface. Pick a
-couple of well-known organizations, but not Aalto University
-(e.g. a company, or another
-university than Aalto). Take the following steps and report the outcome in your
-assignment report (submitted in MyCourses).
+Open Wireshark and start capturing packets from your network interface. The
+interface names may be different in different computers, but Wireshark shows the
+amount of traffic in a small graph, that hopefully helps in finding the right
+one.
+
+Pick a couple of well-known organizations, but not Aalto University (e.g. a
+company, or another university than Aalto), and find out what DNS name they are
+using. Take the following steps and report the outcome in your assignment report
+(submitted in MyCourses).
 
 1. Using **dig**, check the IPv4 address (i.e., make an "A" query) of your
    selected organizations, and include (all of) them in the reply. Try also if

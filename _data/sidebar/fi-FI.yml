@@ -4,7 +4,9 @@
 
 - title: Sisältö
   icon: "fas fa-angles-down"
-  children: []
+  children:
+    - title: 1. Johdanto
+      url: /fi/intro/
 
 - title: Koodiesimerkit
   url: /examples/
