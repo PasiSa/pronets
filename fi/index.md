@@ -6,15 +6,15 @@ translation_key: home
 permalink: /fi/
 ---
 
-Näillä sivuilla on Aalto-yliopiston **Verkkojärjestelmien ohjelmointi -kurssin
-(ELEC-C7260)** materiaali ja tehtävät. Viikoittaiset käytännön järjestelyt ja
-tehtävien palautuslomakkeet löytyvät
+Nämä sivut sisältävät **Verkkojärjestelmien ohjelmointi** (Programming
+Networked Systems) - kurssin materiaalin ja tehtävät. Viikoittaiset käytännön
+järjestelyt ja tehtävien palautuslomakkeet löytyvät
 **[MyCoursesista](https://mycourses.aalto.fi/course/view.php?id=51401)**.
 
-Materiaalin koodiesimerkit on kirjoitettu
+Materiaalin koodiesimerkit on laadittu
 **[Rust-ohjelmointikielellä](https://www.rust-lang.org/)**, ja Rustin käyttöä
 suositellaan myös kurssin ohjelmointitehtävissä ja projektissa. Jos Rust ei ole aiemmin
-tuttu, tällä kurssilla on hyvä tilaisuus opetella se. Kurssin alkuosassa esitellään
+tuttu, nyt on hyvä tilaisuus opetella se. Kurssin alkuosassa esitellään
 kielen perusasiat, ja verkossa on saatavilla runsaasti hyvää oppimateriaalia
 (materiaalissa on linkkejä näihin lähteisiin). Jos et kuitenkaan halua käyttää
 Rustia, palvelintoteutukset voi tehdä myös C- tai C++-kielellä.

@@ -5,7 +5,7 @@ translation_key: intro
 ---
 
 Tässä moduulissa käsitellään kurssilla tarvittavia tietoverkkojen perusteita ja
-esitellään verkkotyökaluja jotka saattavat olla kurssina ikana hyödyksi.
+esitellään verkkotyökaluja jotka saattavat olla kurssin aikana hyödyksi.
 Kurssilla oletetaan, että olet suorittanut jonkun tietoverkkojen peruskurssin,
 kuten _ELEC-C7241 Tietokoneverkot_ tai _ELEC-C7420 Basic principles in
 networking_. Siksi tämä osuus on vain lyhyt kertaus niistä käsitteistä, joita
