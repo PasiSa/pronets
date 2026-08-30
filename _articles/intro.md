@@ -382,10 +382,45 @@ Dig and Netcat are command-line tools. On Linux, they can be run in a terminal
 and installed with the system's package manager if they are not already
 available. On Mac, they can be run in the **Terminal** application and are
 included in the standard installation. On Windows, the recommended approach is
-to install **Windows Subsystem for Linux (WSL)** offers Linux virtual machine
-for Windows users, although similar tools are also available for Windows's
-PowerShell. Wireshark is a graphical application and must be installed
-separately on Linux, macOS, or Windows.
+to install **Windows Subsystem for Linux (WSL)** that offers Linux virtual
+machine for Windows users. Similar tools are also available for Windows's
+PowerShell, they have different command line options and provide little bit
+different output as shown below. Later we will use Docker, which is easiest to
+use with WSL in Windows machines.
+
+Wireshark is a graphical application and must be installed separately on Linux,
+macOS, or Windows.
+
+### Installing Windows Subsystem for Linux
+
+WSL can be installed on Power Shell command line as follows:
+
+    wsl.exe --install
+
+Then you need to select one of the available Linux distributions. The available
+distributions can be seen with following:
+
+    wsl --list --online
+
+After this you will install the actual Linux distribution. Personally I use
+Ubuntu, but you may choose something else if you prefer.
+
+    wsl --install Ubuntu-26.04
+
+Now you can open the WSL distribution command line window in start menu. You
+will create yourself account in the newly setup Linux system. Some Linux
+packages need to be installed to get started. In Ubuntu you'd beed
+`build-essential` to be able to compile Rust (or C) programs. Some Rust crates
+need `pkg-config`. The dig tool is included in `bind9-dnsutils`. If you want to
+develop client with graphical user interface, you'll want to install `x11-apps`.
+Some Rust crates for GUI development may need additional X11 development
+packages, such as `libxkbcommon-x11-0`.
+
+The installation happens as follows, using apt:
+
+    sudo apt update
+    sudo apt install build-essential pkg-config bind9-dnsutils
+    sudo apt install x11-apps libxkbcommon-x11-0
 
 ### The 'Dig' tool
 
@@ -394,6 +429,9 @@ queries. It shows both the records returned by a DNS server and information
 about the query, such as its response status and duration. The most relevant
 part of the output is usually the `ANSWER SECTION`, which lists the matching
 resource records and their time-to-live (TTL) values (in seconds).
+
+If you use Windows (and not WSL), _dig_ is not available. `nslookup` is a
+similar tool.
 
 In its simplest form, the command takes a domain name and, optionally, the
 requested record type. For example, here is an example of IPv4 query for

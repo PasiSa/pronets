@@ -355,16 +355,57 @@ Dig ja Netcat ovat komentorivityökaluja, ja ne voi Linuxissa tarvittaessa
 asentaa järjestelmän paketinhallinnalla. Mac-koneilla niitä käytetään
 **Pääte**-sovelluksessa, ja ne sisältyvät vakioasennukseen. Windowsissa
 suositeltavaa asentaa **Windows Subsystem for Linux (WSL)**, joka tarjoaa
-Linux-virtuaalikoneen ja vastaavat työkalut Windows-käytttäjille. Wireshark on
-graafinen sovellus, joka on asennettava erikseen Linuxiin, macOS:ään tai
-Windowsiin.
+Linux-virtuaalikoneen ja vastaavat työkalut Windows-käytttäjille. Windowsin
+PowerShellistä löytyy vastaavat työkalut, mutta ne saattavat toimia eri lailla
+ja antaa hieman erilaisen tulosteen, mitä alla käsitellään. Hieman myöhemmin
+rupeamme käyttämään Dockeria, mikä Windows-koneilla on helponta ottaa käyttöön
+WSL:n kanssa.
+
+Wireshark on graafinen sovellus, joka on asennettava erikseen Linuxiin,
+macOS:ään tai Windowsiin.
+
+### Windows Subsystem for Linuxin asentaminen
+
+WSL voidaan asentaa Power Shellin komentorivillä seuraavasti:
+
+    wsl.exe --install
+
+Sen jälkeen pitää valita yksi tarjolla olevista Linux-jakeluista (distroista).
+Saatavilla olevat distrot nähdään seuraavasti:
+
+    wsl --list --online
+
+Tämän jälkeen asennat valitsemasi varsinaisen distron. Itse käytän Ubuntua,
+mutta voit myös valita jotain muuta.
+
+    wsl --install Ubuntu-26.04
+
+Nyt voit avata asnnetun WSL-distron komentorivi-ikkunan starttivalikosta. Luot
+itsellesi erillisen tunnuksen WSL:ään. Tämän jälkeen pitää vielä asentaa joitain
+Linux pakkauksia. Ubuntussa tarvitaan `build-essential` käännöstyökalut joita
+tarvitaan Rust (tai C) - ohelmien kääntämiseen. Jotkut Rust-kirjastot
+tarvitsevat käyttöönsä `pkg-config` - työkalun. Dig-työkalu löytyy pakkauksesta
+`bind9-dnsutils`. Jos haluat kehittää asiakasohjelman joka käyttää graafista
+käyttöliittymää, kannattaa asentaa `x11-apps`. Lisäsi jotkut graafisten
+käyttöliittymien kehittämiseen käytetyt Rust-kirjastot saattavat tarvita muita
+X11-kehityspaketteja, esim. `libxkbcommon-x11-0`.
+
+Asennus tapahtuu apt:ia käyttäen esimerkiksi seuraavasti:
+
+    sudo apt update
+    sudo apt install build-essential pkg-config bind9-dnsutils
+    sudo apt install x11-apps libxkbcommon-x11-0
 
 ### Dig-työkalu
 
 **Dig** on DNS-kyselyjen tekemiseen tarkoitettu komentorivityökalu. Se näyttää
 DNS-palvelimen palauttamat tietueet sekä tietoja kyselyoperaatiosta, kuten
 siihen käytetty aika. Tulosteen olennaisin osa on yleensä `ANSWER SECTION`,
-jossa luetellaan löydetyt resurssitietueet ja niiden elinajat sekunteina (time-to-live, TTL).
+jossa luetellaan löydetyt resurssitietueet ja niiden elinajat sekunteina
+(time-to-live, TTL).
+
+Jos käytät Windowsia (etkä WSL:ää), _dig_ ei ole saatavilla. `nsloopkup` on
+vastaava työkalu Windowsissa.
 
 Yksinkertaisimmillaan komennolle annetaan verkkotunnus, sekä tarvittatessa
 haluttu tietuetyyppi. Seuraavassa tehdään esimerkiksi IPv4-kysely nimelle
@@ -441,7 +482,7 @@ dig aalto.fi NS
 
 ### Netcat
 
-**Netcat** (lyhyesti `nc`) on komentorivityökalu. Se avaa pistokkeen
+**Netcat** (lyhyesti `nc`) on komentorivityökalu, joka avaa pistokkeen
 ja välittää käyttäjän syötteen pistokkeeseen sekä pistokkeesta saadun tiedon
 käyttäjälle. Netcat voi avata sekä asiakas- että palvelinpistokkeita TCP:lle ja
 UDP:lle, joten se sopii hyvin verkko-ohjelmistojen testaamiseen ja
