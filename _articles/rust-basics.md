@@ -1,21 +1,24 @@
 ---
 title: Rust basics and client sockets
+lang: en
+translation_key: rust-basics
 ---
 
-In this material, all examples and reference code are written in Rust. Rust is a
-relatively new language that has become popular, for example, among developers
-who write distributed networking code. Like C and C++, Rust is compiled into
-machine code, so Rust programs can be expected to be about as efficient as
-programs written in C or C++. However, Rust's data ownership model aims to
-provide better memory safety (which is important for security), and Rust also
-has modern package management and testing support, among other useful features.
+In this material, all examples and code are written in Rust programming
+language. Rust is a relatively new language that has become popular, for
+example, among developers who write distributed networking code. Like C and C++,
+Rust is compiled into machine code, so Rust programs can be expected to be about
+as efficient as programs written in C or C++. However, Rust's data ownership
+model aims to provide better memory safety (which is important for security),
+and Rust also has modern package management and testing support, among other
+useful features.
 
 <div class="objectives-frame" markdown="1">
 
 **Objectives for this module:**
 
 - You will get an **initial understanding and some practice of Rust basics** and
-  the mechanisms specific to it, for example related to memory ownership.
+  the mechanisms specific to it, for example related to memory handling.
 
 - You will **learn to implement a basic TCP client** that connects to existing
   server, and sends and receives data to it.
@@ -26,7 +29,7 @@ has modern package management and testing support, among other useful features.
   architectures that need to interact between one another.
 
 - You will **learn to make a basic HTTP request and receive a response to it**
-  from a compiled (Rust) program.
+  using Rust.
 
 </div>
 
@@ -35,9 +38,9 @@ has modern package management and testing support, among other useful features.
 The [Rust book](https://doc.rust-lang.org/stable/book/) gives a comprehensive
 learning material and overview of the Rust language. It is recommended that you
 get familiar with it. This material does not cover the Rust specifics in detail,
-but points to the respective chapters in the Rust book in the appropriate
-places. We focus on those features of Rust that help you get started with
-network programming.
+but points to the respective chapters in the Rust book in the related text. We
+focus on those features of Rust that help you get started with network
+programming.
 
 ### Installing Rust and other tools
 
@@ -72,7 +75,7 @@ To get some hands-on feeling about Rust programming, you can also try the
 Like most other programming languages, Rust organizes the program code
 inside functions, and stores data values in variables. The **main** function
 starts the program execution, and any non-trivial program has many other
-functions to implement the program logic. In Rust, variables are declare either
+functions to implement the program logic. In Rust, variables are declared either
 as **non-mutable**, in which case their value cannot be changed afterwards, or
 **mutable**, making it possible to change the variable value over time. [Section
 3.1](https://doc.rust-lang.org/stable/book/ch03-01-variables-and-mutability.html)
@@ -160,10 +163,10 @@ rules. As a result, for beginner the Rust programs may be difficult get compiled
 before the ownership rules are understood. In return we avoid the run-time
 memory management problems that make the C programs so difficult to debug.
 
-Also the concept of **scope** in Rust, as it affects the memory allocation and
-release. In Rust programs developer does not need to manually release allocated
-memory, but it is automatically released when the variable or value owner goes
-out of scope. [Rust book section
+Also the concept of **scope** is important in Rust, as it affects the memory
+allocation and release. In Rust programs developer does not need to manually
+release allocated memory, but it is automatically released when the variable or
+value owner goes out of scope. [Rust book section
 4.1](https://doc.rust-lang.org/stable/book/ch04-01-what-is-ownership.html) has
 more about this.
 
@@ -221,7 +224,7 @@ included in the struct, as shown in example below. Functions usually use `self`
 reference to refer to an instance of a struct that is being operated. If the
 function modifies the content of the structure, the self reference needs to be
 defined mutable: `&mut self`. Ownership rules apply as with any other variables
-also for the "self variable.
+also for the _self_ variable.
 
 **Enumeration (_enum_)** is a a type that can have multiple variants. Below is
 an example (related to our course scope), of a structure that can handle both
@@ -332,7 +335,7 @@ out of scope (i.e., code block or function it is used in).
 **Vector (Vec)** is an ordered list of values of specific type (see [Rust book
 section 8.1](https://doc.rust-lang.org/stable/book/ch08-01-vectors.html)). The
 different items in the vector can be pointed by its index. The _Vec_ type has
-various functions for managing, such as `push()` to add values at the end of the
+various functions for managing it, such as `push()` to add values at the end of the
 vector or `pop()` to take the last value from the vector. The [Vec reference
 documentation](https://doc.rust-lang.org/std/vec/struct.Vec.html) has a complete
 list of these operations.
@@ -451,7 +454,8 @@ features in detail.
 
 When your program grows, you will want to split it into multiple logical modules
 and source files with specifically defined public interfaces that hide the
-implementation details. [Rust book chapter
+implementation details, a common good programming practice in any programming
+language. [Rust book chapter
 7](https://doc.rust-lang.org/stable/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html)
 discusses thoroughly the concepts of **packages** and **crates** and how the
 project is organized into **modules** of specific file hierarchy.
@@ -508,7 +512,7 @@ invalid, or if the destination address and port cannot be reached. If the
 function is successful, it returns a stream object that can be used for different
 network operations from this point on.
 
-Like with many network functions, the connect function call can take a long time
+Like with many network functions, the `connect()` function call can take a long time
 to complete, because it involves network communication. In fact, quite much
 happens:
 
@@ -547,29 +551,32 @@ a common communication model especially in the traditional network applications,
 such as file transfer (which classical world-wide web also is to large extent).
 Stream socket does not pay attention to message boundaries, or does not care in
 what sequence of `write()` calls the data was written. Everything is handled as
-a continuous stream of ordered bytes. Stream socket aims to guarantee that when
-data is successfully delivered, the bytes are delivered to receiver in the
-**original order** and bytes are **not corrupted**. To guarantee this, the TCP
-protocol applies checksums, retransmissions and buffering at both ends of the
-connection. To the application possible problems therefore come out as variable
-delays in data transfer.
+a continuous stream of ordered bytes. The TCP protocol behind stream socket
+guarantees that when data is successfully delivered, the bytes are delivered to
+receiver in the **original order** and bytes are **not corrupted**. To guarantee
+this, the TCP protocol applies checksums, retransmissions and buffering at both
+ends of the connection. To the application possible problems therefore come out
+as variable delays in data transfer.
 
 The operating system kernel maintains **socket buffers** both for data **to be
 written** to network, and for data that has been **received from network
 packets**, but not yet read by the application. When application calls the
 `write()` call, the data passed with the call is **copied to operating system
-socket buffers**. After that the call completes. In other words, when `write()`
-call has completed, in common case the **data has not actually left the local
-computer system** yet, but waits in the operating system buffers. There are
-multiple things that the operating system must do for actually sending the data:
+socket buffers**. After that the call completes, and application can continue
+execution. In other words, when `write()` call has completed, in common case the
+**data has not actually left the local computer system** yet, but waits in the
+operating system buffers.
+
+There are multiple things that the operating system must do for actually sending
+the data:
 
 - The data has to be split into TCP segments, i.e. IP packets to be transmitted
   over the Internet.
 
 - Before sending the packets, the TCP sender needs to ensure that receiver has
   enough buffer space to receive the packets. For this, the TCP receiver tells
-  in the protocol acknowledgments how much free space it has available in its
-  receive buffer. This is called **flow control**.
+  in the TCP acknowledgments its **advertised window**, i.e. how much free
+  space it has available in its receive buffer. This is called **flow control**.
 
 - TCP sender applies **congestion control**, i.e. it adjusts the rate of
   outgoing data based on its measured estimate of network capacity. In the
@@ -581,7 +588,7 @@ multiple things that the operating system must do for actually sending the data:
 The data is stored in the socket send buffers until a TCP acknowledgment
 confirms that the receiver has the data. After this the TCP sender can release
 the data and free some space in the buffer. But even after this, the sending
-application does not know if the receiving application has actually read the
+application does not know **if the receiving application has actually read** the
 data from its socket buffer.
 
 Also the `write()` call can block execution for indefinite amount of time, if
@@ -600,16 +607,15 @@ function that blocks until all of the data is copied.
 The `read()` call from the socket works conversely to the `write()` call: at the
 TCP receiver it copies data from the socket receive buffers to the application
 buffer given as call attribute. If there is no data to be read in the socket
-buffer, the call may block indefinitely. If there was less data in the socket
-buffer than the size of the allocated application buffer, the `read()` call
-returns, but indicates the actual number of bytes copied as its return value.
+buffer, the call may block indefinitely, until there is something to read. If
+there was less data in the socket buffer than the size of the allocated
+application buffer, the `read()` call returns, but indicates the actual number
+of bytes copied as its return value.
 
 ### Example
 
-Below is a short example that uses the above-mentioned function or the mentioned
-variations.
-
-There is also a similar example,
+Below is a short example that uses the above-mentioned functions. There is also
+a similar example,
 "**[simple-client](https://github.com/PasiSa/pronets/tree/main/examples/simple-client/src/main.rs)**"
 in the [examples folder](https://github.com/PasiSa/pronets/tree/main/examples)
 course material git repository. The example contains all needed Rust project
@@ -700,11 +706,12 @@ to 255, or signed integer values from -128 to 127.
 ### Numbers and byte order
 
 Larger integer values, such as 16-bit, 32-bit and 64-bit values, consist of
-multiple bytes. These bytes can be ordered in memory in different ways. In
-**big endian** byte order, the most significant byte is stored first, before the
-less significant bytes. In **little endian** byte order, the least significant
-byte is stored first. Most current desktop and server systems, including x86
-processors and current Apple chips, use little endian byte order internally.
+multiple bytes. These bytes can be ordered in memory in different ways. In **big
+endian** byte order, the most significant byte is stored first, before the less
+significant bytes. In **little endian** byte order, the least significant byte
+is stored first. Most current desktop and server systems, including x86
+processors and current Apple chips, use little endian byte order internally, but
+traditionally this has varied.
 
 Network protocols normally use big endian byte order for binary integer values.
 For this reason, big endian is also called **network byte order**. The byte
@@ -755,7 +762,7 @@ fn receive_number(stream: &mut TcpStream) -> io::Result<u32> {
 
 ### Handling data structures
 
-Another issue is padding. When Rust compiles a normal struct, it may insert
+When Rust compiles a normal struct, it may insert
 unused bytes between fields so that the CPU can access the fields efficiently.
 These padding bytes are part of the in-memory representation of the struct, but
 they are normally not part of the network protocol message. In addition, the
@@ -771,8 +778,8 @@ structure based in incoming byte array.
 ### Text and strings
 
 When strings and text are sent over the network, they must first be converted
-into bytes. For this reason, a protocol specification should define which
-character encoding is used.
+into bytes, to match the data types in function interfaces. For this reason, a
+protocol specification should define which character encoding is used.
 
 Traditionally, many text-based protocols used 7-bit ASCII. ASCII is simple
 because each character fits into one byte, but it only supports a limited set of
@@ -782,7 +789,7 @@ UTF-8 is often used instead. UTF-8 represents Unicode text as a sequence of
 
 Rust strings are UTF-8 encoded, and Rust provides helper methods for converting
 between strings and byte arrays when data is written to or read from the
-network.
+network (because these are different data types).
 
 ```rust
 use std::io::{self, Write};
@@ -803,7 +810,7 @@ fn send_text(stream: &mut TcpStream, text: &str) -> io::Result<()> {
 Probably the most common application protocol in today's Internet is the
 **Hypertext Transfer Protocol (HTTP)** that is used for transmitting web content
 of top the TCP protocol, and as a general communication protocol, for example,
-for various applications that use RESTful APIs. HTTP server can be located at
+for various applications that use REST APIs. HTTP server can be located at
 server port 80 for insecure connection with plaintext messages (readable e.g.
 with Wireshark), or at port 443 (for TLS-encrypted connection, also known as
 HTTPS). In practice these days implementations use practically always the secure
@@ -816,7 +823,7 @@ status code, and also has a header and a body.
 
 HTTP was developed in 1991 by Tim Berners-Lee and few other researchers at CERN
 (see [their publication](https://dl.acm.org/doi/abs/10.1145/179606.179671)), and
-for majority of that time we have used its text-encoded versions 1.0 and 1.1. In
+for majority of the time since then we have used its text-encoded versions 1.0 and 1.1. In
 early 2010s, [HTTP/2](https://datatracker.ietf.org/doc/html/rfc7540) was
 developed. It introduced few significant changes in how protocol is used,
 paricularly, encoding the HTTP headers in binary format, thus taking less space.
@@ -824,11 +831,15 @@ Later became [HTTP/3](https://datatracker.ietf.org/doc/html/rfc9114) which is
 based on the **QUIC protocol** that runs on top of UDP.
 
 For the purpose of the assignments in this course, we will focus on the
-text-based HTTP version 1, even though it is being phased out as the
-newer versions are deployed, as it is easier to get started with.
+text-based HTTP version 1, even though it is being phased out as the newer
+versions are deployed, as it is easier to get started with using the tools we
+have.
 
-A minimal HTTP/1.1 GET request asks the server to return a resource. The empty
-line after the headers marks the end of the request headers.
+A minimal HTTP/1.1 GET request asks the server to return a resource (e.g., a
+HTML web page). There is a request line, followed by variable number of HTTP
+header fields, each on its own line. The empty line after the headers marks the
+end of the request headers, and start of the body part of the message. Unlike
+some other methods, the GET request does not have body after the empty line.
 
 In HTTP/1.1, each line in the request or response should end with the two-byte
 sequence carriage return and line feed, written as `\r\n` in Rust strings. The
@@ -844,11 +855,12 @@ Host: example.com
 ```
 
 A simple HTTP/1.1 response starts with the protocol version, status code and
-status text. The headers are followed by an empty line and then the response
-body. Content-Length tells the length of the body in the response. This is
-needed, so that we know where this response ends and a new one starts. TCP is
-stream-oriented protocol, so the `read` call to the socket does not necessarily
-return a full response.
+status text. As in request message, also in response the headers are followed by
+an empty line and then the response body. `Content-Length` tells the length of
+the body in the response. This is needed, so that we know where this response
+ends and a new one starts. As discussed before, TCP is stream-oriented protocol,
+so the socket `read` call to the socket does not necessarily return a full
+response.
 
 ```http
 HTTP/1.1 200 OK
@@ -859,7 +871,9 @@ Hello, world!
 ```
 
 A POST request sends data to the server. In this case we apply JSON encoding in
-the request body to pass different named attributes to the server.
+the request body to pass different named attributes to the server. JSON is
+common presentation format in HTTP-based APIs, and we will also use it in the
+communication with the course server.
 
 ```http
 POST /new-user HTTP/1.1
@@ -876,7 +890,7 @@ Connection: close
 
 <div class="assignment-frame" markdown="1">
 
-## Assignment
+## Assignment #2
 
 This assignment consists of multiple parts. First you will implement a simple
 TCP client that connects to "`www.aalto.fi`", port 80 and makes a GET request
@@ -889,7 +903,7 @@ Write a short report as MyCourses assignment submission, where you describe your
 progress through the following steps, and answer the questions made along the
 way.
 
-1. Open Wireshark and capture packets that are destined to UDP port 53 or TCP
+1. Open Wireshark and capture packets that are destined to UDP port 53 and TCP
    port 80.
 
 2. After your program has successfully established connection to the server,
@@ -906,15 +920,15 @@ Here is a simple example:
 
 {:start="3"}
 
-3. Can you locate the DNS request and response. Which type of DNS record does
-   the response have and what does it mean?
+3. Locate the DNS request and response. What is the IP address you are
+   connecting to? Is it IPv4 or IPv6?
 
 4. Identify the TCP connection in Wireshark. What is the source TCP port used
    for the communication? What TCP options are visible in the initial SYN packet
 
-After you have checked the DNS query and answer, press return and let the
-program run forward, so that it makes the HTTP query and receives the
-response that is printed to the standard output.
+After you have checked the DNS query and answer, press return in your program
+and let the program run forward, so that it makes the HTTP query and receives
+the response that is printed to the standard output.
 
 {:start="5"}
 
@@ -923,17 +937,17 @@ response that is printed to the standard output.
 
 Extend your program with another HTTP request. This time it is a POST request
 that sends some information to the server, which causes it to fetch the given Git
-repository. The request should be sent to `pronets.dice.aalto.fi`, with the
+repository. The request should be sent to `pronets1.dice.aalto.fi`, with the
 HTTP URL "`/fetch-git`". We use port 80 at server. You don't need to
 analyze Wireshark from this point on, but keeping it open does not harm.
 
-The POST request body should be JSON formatted (use Content-Type
+The POST request body should be JSON formatted (use Content-Type header field
 `application/json`, as in example above), and it should have the following
 keys:
 
-- **"username"**: The name that identifies the project. This should be the same
-  name you gave in the project information questionnaire on the first week of
-  the course.
+- **"username"**: The name that identifies the project. Later on we will assign
+  unique names for each project that will be used in messages. For now you can
+  use any name you want.
 - **"git-repo"**: The SSH URL of the Git repository you are using for your
   course assignments and project (you can find the SSH address under the blue
   "_Code_" button on the version.aalto.fi front page).
