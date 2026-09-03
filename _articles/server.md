@@ -1,5 +1,7 @@
 ---
-title: Server sockets and Docker containers
+title: Server programming and Docker containers
+lang: en
+translation_key: server
 ---
 
 Compared to network clients, server programming presents different properties
@@ -52,14 +54,15 @@ connection requests. This address needs to be known by the client so that it can
 connect the server. A passive socket cannot be used to send or receive data.
 
 In Rust, the `bind` call is used by the server to choose the IP address and
-port. In modern systems it is common that a host has multiple IP addresses in
-use at the same time for different network interfaces. For example, a laptop has
-the loopback address 127.0.0.1 for host-local communication, and it can have
-WiFi and wired LAN interfaces, both with different IP address. Commonly the IP
-address is bound to "**any**" address, i.e., 0.0.0.0 in the case of IPv4. This
-means that incoming connections are taken from any network interface. On the
-other hand, if an application wants to limit to a particular interface it
-accepts connections from, the address needs to be bound accordingly.
+port, and open a socket in passive mode. In modern systems it is common that a
+host has multiple IP addresses in use at the same time for different network
+interfaces. For example, a laptop has the loopback address 127.0.0.1 for
+host-local communication, and it can have WiFi and wired LAN interfaces, both
+with different IP address. Commonly the IP address is bound to "**any**"
+address, i.e., 0.0.0.0 in the case of IPv4. This means that incoming connections
+are taken from any network interface. On the other hand, if an application wants
+to limit to a particular interface it accepts connections from, the address
+needs to be bound accordingly.
 
 ```rust
 use std::io;
@@ -75,6 +78,7 @@ fn main() -> io::Result<()> {
     println!("Accepted connection from {address}");
 
     // 'stream' is now an active socket to the newly connected client.
+    // 'address' contains the IP address and port of the other end.
     // You can start sending and receiving from it normally.
 
     Ok(())
@@ -82,7 +86,7 @@ fn main() -> io::Result<()> {
 ```
 
 When a new connection request comes in at the server, it needs to accept the
-connection request using `accept` call. This creates a new active socket for
+connection request using `accept` call. This creates a new **active socket** for
 communication with the incoming client. This socket has both endpoint addresses
 defined, and it can be used for sending and receiving data. After this the
 operation of the socket becomes symmetric: both ends can send and receive data
@@ -116,8 +120,10 @@ some message:
 
     nc 127.0.0.1 2000
 
-Or, you can use the simple client on the other terminal window to send the
-message (running this on the simple-client directory):
+You can also use the
+**[simple-client](https://github.com/PasiSa/pronets/tree/main/examples/simple-client)**
+example on the other terminal window to send the message using the localhost
+address (running this on the simple-client directory of the repository):
 
     cargo run -- 127.0.0.1:2000 Hello
 
@@ -158,47 +164,44 @@ the loop.
 ## I/O multiplexing and non-blocking sockets
 
 By default a socket is opened in blocking mode, i.e., function calls such as
-_read_ and _write_ can block the execution of the program until it becomes
+`read` and `write` can block the execution of the program until it becomes
 possible to read or write. When a program needs to react to other inputs timely,
 i.e. user interaction or multiple clients connected to server concurrently, such
 blocking behavior causes problems.
 
 Sockets can be **can be configured into a non-blocking mode**, in which case the
 calls return immediately. In this case, if for example the `read` function did
-not have any data to read, and it would have blocked in the blocking mode, the
-non-blocking version of the call returns a specific **WouldBlock** "error" (that
-is not actually an error, but just tells there was nothing to read). A naive
-implementation would be to build a while loop in the server that reads all
-sockets in this way. However, this would create a busy loop that would
-unnecessarily load the CPU, even if no data is coming from any of the clients.
+not have any data to read, and it would have therefore stopped the execution in
+the normal blocking mode, the non-blocking version of the call returns a
+specific **WouldBlock** "error" (that is not actually an error, but just tells
+there was nothing to read). A naive implementation would be to build a
+loop in the server that reads all sockets in this way. However, this would
+create a busy loop that would unnecessarily load the CPU, even if no data is
+coming from any of the clients.
 
-To avoid unnecessary CPU load, the Posix C API has functions
-**[select](https://man7.org/linux/man-pages/man2/select.2.html)** and
-**[poll](https://man7.org/linux/man-pages/man2/poll.2.html)** functions that can
-be used to wait simultaneously I/O events from any of the defined sockets, or
-other I/O sources. These functions block until any of the give sources can be
-called so that the execution would not block. Their return value indicate the
-sources with available events, that can then be iterated one by one. In addition
-there are system-specific, more efficient variants for these functions, such as
-`epoll` in Linux or `kqueue` in BSD-based systems and MacOS.
+To avoid unnecessary CPU load with non-blocking sockets, the Posix API has a
+**poll** operation that can be used to wait multiple I/O events simultaneously
+from sockets and other I/O sources. The operation blocks until at least one of
+the registered event sources is available. Then from the return value the
+application knows which sockets and other information sources can be processed.
 
 In Rust, [**mio**](https://docs.rs/crate/mio) is a library (or "crate" in Rust
 terminology) that encapsulates the non-blocking socket operation into convenient
-set of functions. Our next example is
+set of functions. The
 **[iterative-server](https://github.com/PasiSa/pronets/tree/main/examples/iterative-server/src/main.rs)**
-that demonstrates the use of _mio_ (you may want to open the code in a separate
-window while reading this section). The server just reads incoming data from
-socket and echoes it back. Different from the earlier implementation, the server
-does not close the socket after writing data, but after responding to client, it
-continues waiting for more data, until the client closes the connection.
-Therefore the server needs to prepare to handle multiple client sockets
-simultaneously.
+example demonstrates the use of _mio_ (you may want to open the code in a
+separate window while reading this section). The server just reads incoming data
+from socket and echoes it back, like the previous example. Differing from the
+earlier example, the server does not close the socket after writing data, but
+after responding to client, it continues waiting for more data, until the client
+closes the connection. Therefore the server needs to be able to handle multiple
+client sockets simultaneously.
 
 The first lines of the `main` function are similar to previous example, reading
 the binding address from command line arguments. Then we set up Mio's poll
 service and container for the Mio events. Each possible event source is assigned
-an unique "Token" that identifies the event source, basically not much different
-from integer. We implement a small "TokenManager" for easier allocation and
+an unique "Token" that identifies the event source (bascially just encapsulating
+an integer), We implement a small "TokenManager" for easier allocation and
 release of unique tokens in a separate file, `tokenmanager.rs`.
 
 First we add just the passive listening socket as event source ([line
@@ -208,45 +211,45 @@ different than the standard implementations of the same types (see the `use`
 statements in the beginning of the program). These are compatible with Mio and
 implement non-blocking operation.
 
-The heart of the main event loop is Mio's `poll` function ([line
+The heart of the main event loop is _Mio_'s `poll` function ([line
 71](https://github.com/PasiSa/pronets/blob/6e0d2f11eb9fdfd06c07322733acb3b109110bd9/examples/iterative-server/src/main.rs#L71))
-that stops until at least one event is available. After poll
-completes, there may be multiple events available, so we need to handle all of
-them iteratively. If there is an event on the listening socket, we know that we
-can call `accept` safely without blocking the program. We have a small `Client`
-structure that contains the socket and address of an client. All active clients
-are stored in a `HashMap` container. If there was any more complicated
-application logic, the `Client` structure could contain also other
-client-specific information that is needed. When a new client is accepted, a new
-token is allocated for it and registered to Mio as an interesting event source.
+that stops until at least one event is available. After poll completes, there
+may be multiple events available, so we need to handle all of them iteratively.
+If there is an event on the listening socket, we know that we can call `accept`
+safely without blocking the program. We have a small `Client` structure that
+contains the socket and address of an client. All active clients are stored in a
+`HashMap` container, where the _Mio_ token is used as the key. If there was any
+more complicated application logic, the `Client` structure could contain also
+other client-specific information for the use of the application. When a new
+client is accepted, a new token is allocated for it and registered to _Mio_ as
+an interesting event source.
 
-Mio has separate event types for situations when socket is readable, and for
-situations when socket is writable without blocking the execution. If we wanted
-a proper implementation, we should also handle the `write()` calls through an
-event processing loop, but in this case we skip it for simplicity (and perhaps
-laziness). On the other hand, we write a maximum of 160 bytes, and the operating
-system socket buffers are usually at least tens of kilobytes, so having
-`write()` call to block because of full socket buffer, is quite unlikely.
+Mio has separate **event types** for situations when socket is **readable**, and
+for situations when socket is **writable** without blocking the execution. If we
+wanted a proper implementation, we should also handle the `write()` calls
+through an event processing loop, but in this case we skip it for simplicity
+(and perhaps laziness). On the other hand, we write a maximum of 160 bytes, and
+the operating system socket buffers are usually at least tens of kilobytes, so
+having `write()` call to block because of full socket buffer, is quite unlikely.
 
 After client connections are opened, also the possible client socket events are
 checked in separate if branch. Here one should note handling of the `read` call
-return values. In Rust, an often used return type is `Result` that can yield two
-return value variants. `Ok` response is returned when read is successful. In the
-case of Ok, the return value will indicate the number of bytes read. If the
-return value is 0, the client has closed the socket, and therefore we should
-clean up: release the Mio event token, and remove the client from the HashMap.
-This also causes the lifetime of the socket to end, so it will be cleaned up
-also from our end. `Err` response means that error occurred in read. Also in
-this case we clean up the client socket, but do not terminate the operation of
-the main server loop. Earlier we have mostly used the `?` operator that
-propagates the possible error up in the call stack, which would have caused
+return values, and the use of `Result`: `Ok` response is returned when read is
+successful. In the case of Ok, the return value will indicate the number of
+bytes read. If the return value is 0, the client has closed the socket, and
+therefore we should clean up: release the Mio event token, and remove the client
+from the HashMap. This also causes the lifetime of the socket to end, so it will
+be cleaned up also from our end. `Err` response means that error occurred in
+read. Also in this case we clean up the client socket, but do not terminate the
+operation of the main server loop. Earlier we have mostly used the `?` operator
+that propagates the possible error up in the call stack, which would have caused
 termination of the program.
 
 The `write` call shows another way of checking for an error outcome, in case we
 are not interested in the exact Ok return value. A better alternative, in
 addition to handling the write call through the writable event, would be to
 check how many bytes were actually written, and prepare for the case when only
-part of the data was written. Again, lazy coding.
+part of the data was written.
 
 You can test the program by first starting the server in the same way as before:
 
@@ -257,15 +260,15 @@ each, opening multiple connections to server:
 
     nc 127.0.0.1 2000
 
-Try typing different things to different terminal windows, closing netcat in
-some windows by Ctrl-D (Hang-up of connection) or Ctrl-C (Interrupt netcat), and
-then restarting netcat.
+Try typing different things to different client terminal windows, closing netcat
+in some windows by Ctrl-D (Hang-up of connection) or Ctrl-C (Interrupt netcat),
+and then restarting netcat, to see how the server reacts.
 
-A benefit of a single-threaded, event-driven server design is that it can scale
-efficiently and behave predictably (as long as the operations are not blocking),
-as it avoids thread management overhead and synchronization. However, designing
-such applications can be complex, particularly with respect to state management
-and robust error handling.
+A benefit of a single-threaded, event-driven server design is that it is
+lightweight and behaves predictably (as long as the operations are not
+blocking), as it avoids thread management overhead and synchronization. On the
+other hand, just using a single thread may not efficiently use the available
+resources at a server with multiple CPUs.
 
 ## Docker basics
 
@@ -408,14 +411,20 @@ making the session behave like an interactive terminal.
 ## Rust project organization and workspaces
 
 Previous course section already briefly mentioned the concept of modules and
-packages in a Rust project, an we will next discuss (and propose) a structure
-for organizing a client/server Rust project as two packages in a shared
-workspace. Each package has a separate `Cargo.toml` file, and builds into a
-separate binary. In many projects some packages could be libraries needed as
-part of a larger software, and other packages could be binaries using these
-libraries. We have example
+packages in a Rust project. In the following we will discuss (and propose) a
+structure for organizing a client/server Rust project as two packages in a
+shared workspace in a single git repository. Each package has a separate
+`Cargo.toml` file, and builds into a separate binary. For example, in some
+projects there could be packages for the libraries needed as part of a larger
+software, and other packages for binaries using these libraries.
+
+For a client-server project, we have example
 "**[project-template](https://github.com/PasiSa/pronets/tree/main/examples/project-template)**"
 presenting this setup that you can use as a basis for your work, if you so wish.
+The project template refers to concepts we have not yet discussed, such as
+threads and the _tokio_ library, but don't worry too much about those yet. For
+this week assignment's client part you can also implement a simple command
+line-based version of the client, or alternatively modify the client example.
 
 Even though our course project will be fairly small, there are some good reasons
 to make the client and server implementations two separate packages in the same
@@ -423,24 +432,25 @@ workspace, especially if one wants to create a graphical client. Our example
 uses the **[Slint](https://slint.dev/)** GUI framework for the user interface,
 and the needed crates (libraries) need to be included as dependencies for the
 client implementation in its
-[Cargo.toml](https://github.com/PasiSa/pronets/blob/main/examples/project-template/client/Cargo.toml),
-but they would be useless at the server. Similarly, the server package may need
-some crates that are not needed at the client. On the other hand, having the two
-related applications in the same workspace connects them together, and allows
-sharing some common code, e.g. for message parsing in the same git repository.
+[Cargo.toml](https://github.com/PasiSa/pronets/blob/main/examples/project-template/client/Cargo.toml).
+However these crates would be useless at the server, and therefore do not need
+built as part of the server binary (and the docker image on our server).
+Similarly, the server package may need some crates that are not needed at the
+client. On the other hand, having the two related applications in the same
+workspace connects them together, and allows sharing some common code, e.g. for
+message parsing in the same git repository.
 
 The client example also shows how a package can include external
 crates/libraries in the
 [Cargo.toml](https://github.com/PasiSa/pronets/blob/main/examples/project-template/client/Cargo.toml)
 file, so that they are automatically fetches from the Rust crate registry
-("[crates.io](https://crates.io/)"). Usually one wants to specify a minimal (or
-exact) version to use. Some larger libraries are divided into specific
-selectable "features" that help in reducing the final binary size for features
-not needed.
+("[crates.io](https://crates.io/)"). Usually you should specify the version to
+use. Some larger libraries are divided into specific selectable "features" that
+help in reducing the final binary size for features not needed.
 
 <div class="assignment-frame" markdown="1">
 
-## Assignment
+## Assignment #3
 
 We now start developing network software project in the git repository created
 in the beginning of the course. It is recommended that you include the client
@@ -477,11 +487,12 @@ it. The Dockerfile should be at the root of your git repository, and be named
 "`Dockerfile`" so that our course server can find it for building the image at
 the server.
 
-After the Dockerfile is created and you have tested that the server works, it is
-time to push your work to your git server repository.
+After the Dockerfile is created and you have tested that the server works
+locally, e.g. using Docker Desktop, it is time to push your work to your git
+server repository.
 
 **Part 4**: The server should be registered to course server by using a HTTP
-POST request to **pronets.dice.aalto.fi**, port 80. The exact HTTP endpoint is
+POST request to **pronets1.dice.aalto.fi**, port 80. The exact HTTP endpoint is
 `POST /run-docker`. The body of the POST request must be JSON encoded and have
 the following fields:
 
@@ -491,34 +502,34 @@ the following fields:
   assignments and project.
 - **"ports"**: The port number(s) that the server listens for connections. For
   now there is only one port in string format.
-- **"protocol"**: The protocol identifier and protocol, e.g. "`base-1`".
+- **"protocol"**: The protocol identifier and protocol. This should be now
+  "`base-1`". We will explain the protocols a bit more in next module.
 
 Note that the structure is same as with the "`/fetch-git`" endpoint developed in
-last assignment, with one additional field.
+last assignment, with couple of additional fields.
 
 Implement a program that sends the HTTP request (or it could be part of your
 client code, for example) and waits for response. When the server receives the
 request, it fetches your code from git, and uses your Dockerfile to build and
-run your server. Note that this takes time (could be couple of minutes even),
+run your server. Note that this takes time (could be even minutes),
 but if everything goes well and you eventually receive "OK" response, your
-server code should be running in `pronets.dice.aalto.fi`, listening to
+server code should be running in `pronets1.dice.aalto.fi`, listening to
 connections at the port you have given.
 
-The main course "master server" sends the TST message every 10 seconds to all
+The main course "master server" sends the TST message every 60 seconds to all
 containers that have been started. You can see all the registered servers, along
 with their ports, and the outcome of the latest TST message at
-**http://pronets.dice.aalto.fi/containers.**
+**[https://pronets1.dice.aalto.fi/](https://pronets1.dice.aalto.fi/)**
 
 Write a short report where you document the progress going forward with the
-above steps, focusing on the challenges you had with your work. Can you find
-your container in the `/containers` view, and does is show "TST OK" for your
-container? Again, include also the following information:
+above steps. For each step, tell shortly how did you approach the problem, what
+difficulties you encountered, and how did your solve them. Can you find your
+container in the server containers view, and does it show "OK" for your
+container? As before, include also the following information:
 
 - How much time did you use for this assignment?
-
 - What was easy or difficult in the assignment?
-
-- What tools did you use? In particular, if you used AI assistants, tell how did
-  you use then and if they were helpful.
+- What tools or other information sources did you use? In particular, if you
+  used AI assistants, tell how did you use them and if they were helpful.
 
 </div>

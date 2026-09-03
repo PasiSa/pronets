@@ -9,6 +9,8 @@
       url: /fi/intro/
     - title: 2. Rustin perusteet
       url: /fi/rust-basics/
+    - title: 3. Palvelinohjelmointi
+      url: /fi/server/
 
 - title: Koodiesimerkit
   url: /examples/
