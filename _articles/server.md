@@ -485,7 +485,7 @@ POST request to **pronets.dice.aalto.fi**, port 80. The exact HTTP endpoint is
 `POST /run-docker`. The body of the POST request must be JSON encoded and have
 the following fields:
 
-- **"username"**: The username you want to use with the server. This should be
+- **"name"**: The username you want to use with the server. This should be
   the username you declared earlier.
 - **"git-repo"**: The URL of the Git repository you are using for your course
   assignments and project.

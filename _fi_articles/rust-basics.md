@@ -762,11 +762,13 @@ Connection: close
 ## Tehtävä #2
 
 Tämä tehtävä koostuu useasta osasta. Ensin toteutetaan TCP-asiakas, joka
-muodostaa yhteyden osoitteeseen `www.aalto.fi` porttiin 80 ja tekee GET-pyynnön
-resurssille `/index.html`. Toisin sanoen käytämme salaamatonta HTTP:tä (vaikka
-sitä ei todellisissa sovelluksissa nykyään suositella, mutta emme osaa toteuttaa
-vielä TLS-salausta). Luo aiemmin tekemääsi Git-repositorioon hakemisto
-"**http-client**" ja sijoita asiakkaan lähdekoodi sinne nimellä `main.rs`.
+muodostaa yhteyden osoitteeseen valitsemallesi web-palvelimelle porttiin 80 ja
+tekee GET-pyynnön resurssille `/index.html` (voit käyttää esimerkiksi samaa
+osoitetta kuin edellisessä harjoituksessa). Toisin sanoen käytämme salaamatonta
+HTTP:tä (vaikka sitä ei todellisissa sovelluksissa nykyään suositella, mutta
+emme osaa toteuttaa vielä TLS-salausta). Luo aiemmin tekemääsi Git-repositorioon
+hakemisto "**http-client**" ja sijoita asiakkaan lähdekoodi sinne nimellä
+`main.rs`.
 
 Kirjoita MyCourses-palautukseen lyhyt raportti, jossa kuvaat etenemisesi
 seuraavien askelmien mukaisesti ja vastaat kysymyksiin joita matkan varrella
@@ -811,7 +813,7 @@ Pyynnön rungon on oltava JSON-muotoinen ja sen `Content-Type`-otsakekentän on
 oltava `application/json`, kuten aiemmassa esimerkissä. Rungossa on seuraavat
 avaimet:
 
-- **`username`**: projektin nimi. Myöhemmin jaamme projekteille uniikit nimet,
+- **`name`**: projektin nimi. Myöhemmin jaamme projekteille uniikit nimet,
   joita käytetään viesteissä. Tässä vaiheessa voit käyttää mitä tahansa nimeä.
 - **`git-repo`**: kurssitehtävissä ja projektissa käyttämäsi Git-repositorion
   SSH-osoite. Löydät sen version.aalto.fi-palvelun sinisen _Code_-painikkeen

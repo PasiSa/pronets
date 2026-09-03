@@ -893,11 +893,12 @@ Connection: close
 ## Assignment #2
 
 This assignment consists of multiple parts. First you will implement a simple
-TCP client that connects to "`www.aalto.fi`", port 80 and makes a GET request
-for "`/index.html`". I.e., for this assignment we use unsecure HTTP (which is
-not recommended in reality, but we do not know TLS yet). In the git repository
-you created earlier, create a folder "**http-client**", and place your TCP
-client source code there as file titled "`main.rs`".
+TCP client that connects to a web server of your choice (you can use the same as
+in last exercise, for example), port 80 and makes a GET request for
+"`/index.html`". I.e., for this assignment we use unsecure HTTP (which is not
+recommended in reality, but we do not know TLS yet). In the git repository you
+created earlier, create a folder "**http-client**", and place your TCP client
+source code there as file titled "`main.rs`".
 
 Write a short report as MyCourses assignment submission, where you describe your
 progress through the following steps, and answer the questions made along the
@@ -945,7 +946,7 @@ The POST request body should be JSON formatted (use Content-Type header field
 `application/json`, as in example above), and it should have the following
 keys:
 
-- **"username"**: The name that identifies the project. Later on we will assign
+- **"name"**: The name that identifies the project. Later on we will assign
   unique names for each project that will be used in messages. For now you can
   use any name you want.
 - **"git-repo"**: The SSH URL of the Git repository you are using for your
