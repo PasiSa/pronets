@@ -1,5 +1,5 @@
 ---
-title: Rustin perusteet ja asiakassovelluksen pistokkeet
+title: Rustin perusteet ja asiakaspistokkeet
 lang: fi-FI
 translation_key: rust-basics
 ---
@@ -51,6 +51,11 @@ kannattaa käyttää. Lisäksi kannattaa asentaa esimerkiksi **rust-analyzer** j
 **Dockeria**. Kurssin palautukset työnnetään kurssia varten luotuun
 Git-repositorioon, ja palvelinohjelmat suoritetaan Dockerilla yhteisellä
 palvelinkoneella.
+
+Jos käytät Windows Sybsystem for Linuxia, asenna lisäksi WSL-laajennus VS
+Codeen. Tällöin voi asentaa VS Coden normaalisti Windows-koneeseesi, ja
+WSL-laajennuksen avulla pääset käsiksi WSL-tiedostojärjestelmän tiedostoihin
+(jotka ovat erillisiä Windows-isäntäjärjestelmän tiedostojärjestelmästä).
 
 Kannattaa kokeilla asennuksen jälkeen Rust-kirjan kohdan 1.3 [Hello,
 Cargo!](https://doc.rust-lang.org/stable/book/ch01-03-hello-cargo.html)
@@ -159,6 +164,7 @@ fn add_greeting(name: &mut String) {
 }
 
 fn main() {
+    // Luo uuden String-instanssin vakiomerkkijonosta "Ada"
     let mut name = String::from("Ada");
 
     add_greeting(&mut name);
@@ -166,7 +172,10 @@ fn main() {
 }
 ```
 
-Kutsuja määrittelee `name`-muuttujan muuttuvaksi ja muodostaa viitteen
+Esimerkki näyttää kuinka dynaamisesti varattua String-instanssia voidaan
+muuttaa: ensin lisätään "Hello, " parametrina saadun alkuperäisen merkkijonon
+eteen, sen jälkeen lisätään huutomerkki perään.
+Tämä voidaan tehdä, koska kutsuja määrittelee `name`-muuttujan muuttuvaksi ja muodostaa viitteen
 ilmauksella `&mut name`. Parametrityyppi `&mut String` sallii lainatun arvon
 muuttamisen. Omistajuus säilyy `main`-funktiolla, joten arvoa voi käyttää myös
 kutsun jälkeen.
@@ -788,20 +797,25 @@ std::io::stdin().read_line(&mut input).unwrap();
 
 {:start="3"}
 
-3. Paikanna DNS-pyyntö ja -vastaus. Mihin IP-osoitteeseen olet ottamassa
-   yhteyttä? Onko se IPv4 vai IPv6?
+3. Paikanna DNS-pyyntö ja -vastaus. Mitä DNS-kyselyitä näet `connect()` - kutsun
+   seurauksena? Saatko vastauksissa yhden tai useamman IPv4 tai IPv6 -
+   osoitteen. Kannattaa huomioida, että jos olet kokeillut ohjelmaasi useamman
+   kerran, on mahdollista, että DNS-vastaus on tallentunut koneesi välimuistiin,
+   ja tässä tapauksessa on mahdollista, että DNS-kyselyä ei tehdä. Jos et näe
+   DNS-pyyntöjä, kerro myös se.
 
-4. Tunnista TCP-yhteys Wiresharkissa. Mitä lähdeporttia yhteys käyttää? Mitkä
-   TCP-optiot näkyvät ensimmäisessä SYN-paketissa?
+4. Etsi käyttämäsi TCP-yhteys Wiresharkissa. Mikä kohde-IPv4/IPv6-osoite
+   valikoitui yhteyden käyttöön? Mikä on lähde-IP-osoite? Mikä yhteydessä
+   käytetty lähdeportti (kohdeportin pitäisi olla 80)?
 
 Kun olet tarkistanut DNS-kyselyn ja -vastauksen, paina sovelluksessasi Enteriä.
 Anna ohjelman lähettää HTTP-pyyntö, vastaanottaa vastaus ja tulostaa se
-vakiotulosteeseen.
+terminaaliin.
 
 {:start="5"}
 
-5. Mikä vastauksen tilakoodi on ja mitä se tarkoittaa? Mitä lisätietoja
-   otsakkeet kertovat?
+5. Kopioi vastauksen HTTP-otsakkeet raporttiisi. Ovatko ne kuten olisit voinut
+   olettaa, edellisen tehtäväkierroksen netcat-kokemustesi perusteella?
 
 Laajenna ohjelmaa toisella HTTP-pyynnöllä. Tee tällä kertaa POST-pyyntö, joka
 lähettää palvelimelle tietoja ja saa sen hakemaan annetun Git-repositorion.
@@ -826,15 +840,15 @@ avaimet:
    Jos ei, kerro se raportissa ja yritä korjata tilanne. Repositoriossa on
    oltava vähintään yksi commit, jotta palvelin voi hakea sen.
 
-Kun koodi on valmis, tee commit ja työnnä se repositorioosi. Kerro
-commit-viestissä tehtävän 2 valmistumisesta, esimerkiksi _Assignment 2
-completed_.
+Kun koodi on valmis, tee commit ja työnnä (push) se repositorioosi. Kerro
+commit-viestissä tehtävän 2 valmistumisesta, esimerkiksi viestillä "_Assignment
+2 completed_".
 
 Vastaa lopuksi seuraaviin kysymyksiin:
 
 - Kuinka paljon aikaa käytit tehtävään?
 - Mikä tehtävässä oli helppoa tai vaikeaa?
-- Mitä työkaluja käytit? Jos käytit tekoälyavustimia, kerro miten käytit niitä
-  ja olivatko ne hyödyllisiä.
+- Mitä työkaluja tai muita tietolähteitä käytit? Varsinkin jos käytit
+  tekoälyavustimia, kerro miten käytit niitä ja olivatko ne hyödyllisiä.
 
 </div>

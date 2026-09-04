@@ -57,6 +57,11 @@ extensions, such as **rust-analyzer** and **Rust Syntax** highlighting module
 for better experience. You can find these in the VS Code extension catalogue
 after installing the tool.
 
+If you use Windows Subsystem for Linux, install also the **WSL extension** to VS
+Code. In this case you should install VS Code normally to your Windows, and with
+the extension you can work with files inside the WSL file system (which is
+separate of the host Windows file system).
+
 A little bit later you will also need **git** and **Docker**. Code submissions
 should be pushed to git repository created for this course, and Docker is used
 to run the server programs in a commonly accessible server machine.
@@ -193,6 +198,7 @@ fn add_greeting(name: &mut String) {
 }
 
 fn main() {
+    // Creates a new String object from "Ada" string literal.
     let mut name = String::from("Ada");
 
     add_greeting(&mut name);
@@ -200,7 +206,10 @@ fn main() {
 }
 ```
 
-The caller declares `name` as mutable and creates a mutable reference with
+The example shows how the dynamically allocated String object can be modified:
+first, "Hello, " is added in front of the original string object received as an
+argument, then an exclamation mark is added at the end.
+This can be done because the caller declares `name` as mutable and creates a mutable reference with
 `&mut name`. The parameter type `&mut String` allows `add_greeting` to change
 the borrowed value. Ownership remains in `main`, so `name` can still be used
 after the function call and contains the changes made by the function.
@@ -921,25 +930,32 @@ Here is a simple example:
 
 {:start="3"}
 
-3. Locate the DNS request and response. What is the IP address you are
-   connecting to? Is it IPv4 or IPv6?
+3. Locate the DNS request and response. What queries do you see as the result
+   the of `connect()` call? Do you get one or many IPv4 or IPv6 addresses in the
+   responses? Note that if you have made multiple attempts with your program, it
+   is possible that the DNS response is cached on your local machine earlier. In
+   this case it is also possible that no DNS query is made. If you don't see DNS
+   requests, tell also that.
 
-4. Identify the TCP connection in Wireshark. What is the source TCP port used
-   for the communication? What TCP options are visible in the initial SYN packet
+4. Identify the TCP connection you use in Wireshark. Which destination IPv4/IPv6
+   address was chosen for connection? What is the source IP address on the
+   connection? What is the source TCP port used for the communication
+   (destination should be 80)?
 
-After you have checked the DNS query and answer, press return in your program
+After you have checked the DNS query and answer, press Enter in your program
 and let the program run forward, so that it makes the HTTP query and receives
-the response that is printed to the standard output.
+the response that is printed to the terminal.
 
 {:start="5"}
 
-5. What is the status code in the response and what does it mean? What
-   additional information are the headers telling?
+5. Copy the HTTP response headers your received from the socket in your report.
+   Are they as expected, based on your experiences from the last assignment with
+   netcat?
 
 Extend your program with another HTTP request. This time it is a POST request
 that sends some information to the server, which causes it to fetch the given Git
 repository. The request should be sent to `pronets1.dice.aalto.fi`, with the
-HTTP URL "`/fetch-git`". We use port 80 at server. You don't need to
+HTTP URL "`/fetch-git`". We use port 80 at the server. You don't need to
 analyze Wireshark from this point on, but keeping it open does not harm.
 
 The POST request body should be JSON formatted (use Content-Type header field
@@ -955,22 +971,22 @@ keys:
 
 {:start="6"}
 
-6. Print the response that the server returns to the request. Note that the
+6. Print the response that the server returns to the request. Note that
    processing the request may take a short while, because the server actually
    tries to clone your repo.
    Was request successful according to response? If not, tell also that in your
    report, but try to fix the situation. Note that you should have at least one
    commit in your Git repo, so that the server can fetch it.
 
-After you are done with your code, commit and push it to your repository. In the
-commit log message, tell that this assignment completes assignment 2, e.g.
+After you are done with your code, commit again and push to your repository. In
+the commit log message, tell that this assignment completes assignment 2, e.g.
 something like "_Assignment 2 completed_".
 
 Finally, answer the following questions:
 
 - How much time did you use for this assignment?
 - What was easy or difficult in the assignment?
-- What tools did you use? In particular, if you used AI assistants, tell how did
-  you use then and if they were helpful.
+- What tools or other information sources did you use? In particular, if you
+  used AI assistants, tell how did you use them and if they were helpful.
 
 </div>
