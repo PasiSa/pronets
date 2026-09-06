@@ -292,6 +292,33 @@ ensimmäinen `find_address` - kutsu palauttaa _None_ - arvon, ja jälkimmäinen
 `parse_port` - kutsu virhearvon. Mikäli kutsuissa olisi käytetty esimerkiksi
 arvoja "localhost" ja "8080", oltaisiin päädytty _Some_ ja _Ok_ haaroihin.
 
+`Result`-tyyppiä käytetään paljon erityisesti verkko-ohjelmoinnissa, jossa eri
+operaatiot voivat epäonnistua monista syistä. Virhetilanteiden käsittelyyn on
+olemassa erityinen `?`-operaattori, jonka voi sijoittaa lauseen loppuun. Edellä
+olevassa ohjelmassa voitaisiin esimerkiksi kirjoittaa:
+
+```rust
+let port = parse_port("1234")?;
+```
+
+Jos `parse_port` palauttaa virheen, nykyisen funktion suoritus keskeytyy ja
+virhearvo välitetään sen paluuarvona. Tässä tapauksessa `main()`-funktio pitäisi
+siis muuttaa palauttamaan `Result`-arvo. Operaattorin avulla onnistunut arvo
+voidaan sijoittaa suoraan `u16`-tyyppiseen muuttujaan. Tästä nähdään myöhemmin
+käytännön esimerkkejä pistokeohjelmoinnin yhteydessä.
+
+Mahdollinen virhe tai _Option_-tyypin `None`-arvo voidaan käsitellä myös
+`unwrap()`-funktiolla, esimerkiksi:
+
+```rust
+let port = parse_port("1234").unwrap();
+```
+
+Virheen tai määrittelemättömän arvon tapauksessa `unwrap()` keskeyttää koko
+ohjelman ja tulostaa virheilmoituksen. Siksi sen käyttöä **pitäisi välttää**,
+ellei operaation epäonnistuminen ole niin vakavaa, että ohjelman pysäyttäminen
+on järkevää. On (lähes) aina parempi käsitellä virhetilanne asianmukaisesti.
+
 ### Kokoelmat
 
 Kokoelmat ovat dynaamisia tietotyyppejä, joihin tallennetaan vaihteleva määrä
@@ -441,7 +468,7 @@ siirrymme palvelinpistokkeisiin kurssin seuraavassa moduulissa.
 Rustissa TCP-asiakkaan virtapistoke muodostetaan yleensä `connect()`-funktiolla:
 
 ```rust
-TcpStream::connect("some.address.fi:5000");
+let stream = TcpStream::connect("some.address.fi:5000")?;
 ```
 
 Merkkijonoparametrin käyttö on useimmissa tapauksessa helpointa, mutta Rust

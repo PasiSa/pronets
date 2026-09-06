@@ -334,6 +334,34 @@ to handle both possible variants. In the first call, `find_address` returns
 `None`, and in the second call, `parse_port` returns `Err`. Using `"localhost"`
 and `"8080"` instead would exercise the `Some` and `Ok` branches.
 
+The `Result` type is used quite much especially in network programming where
+different operations may fail for multiple reasons. There is a special operator
+`?` that can be placed at the end of the statements to handle error cases, for
+example in the case of above program there could be:
+
+```rust
+let port = parse_port("1234")?;
+```
+
+If parse port returns error, the current function is interrupted and the error
+value is passed as its return value, i.e. in this case the `main()` function
+should be refined to return a `Result` value. With the operator we can then
+directly do the `u16` assignment. We will see examples of this in practice later
+with socket programming examples.
+
+It is also possible to use `unwrap()` function to process the possible error, or
+`None` _Option_ value, e.g.:
+
+```rust
+let port = parse_port("1234").unwrap();
+```
+
+`unwrap()` interrupts the entire program with error message in case of error or
+unspecified value. Therefore it **should be avoided**, unless there is a
+situation that error outcome of the operation is so severe that stopping the
+program is sensible. It is (almost) always better to handle the error case
+properly.
+
 ### Collections
 
 Collections are dynamic data types to store multiple data items of varying
@@ -503,7 +531,7 @@ In Rust, a TCP-based client stream socket is typically created using the
 `connect()` function:
 
 ```rust
-    TcpStream::connect("some.address.fi:5000");
+    let stream = TcpStream::connect("some.address.fi:5000")?;
 ```
 
 Using the string argument is most convenient in most cases, but there are also
