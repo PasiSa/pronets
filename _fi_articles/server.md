@@ -100,6 +100,48 @@ asiakkaiden oikea-aikaiseen käsittelyyn, sillä oletusarvoisesti luku- ja
 kirjoituskutsut voivat estää ohjelman suorituksen määräämättömäksi ajaksi, ellei
 rinnakkaisuutta ja ei-blokkaavaa toimintaa ole toteutettu asianmukaisesti.
 
+## Erilaisia palvelintoteutuksia
+
+Palvelin voidaan toteuttaa eri tavoin sovelluksen tarpeiden ja
+skaalautuvuusvaatimusten perusteella. Seuraavassa on joitakin yleisiä
+toteutustapoja:
+
+- Yksinkertaisin vaihtoehto on yksisäikeinen **iteratiivinen palvelin**, joka
+  käsittelee asiakasyhteydet yksi kerrallaan ilman samanaikaisuutta. Tämä voi
+  soveltua hyvin pieniin tehtäviin ja yksinkertaisiin testeihin, mutta muutoin
+  ei ole kovin hyvä tapa toteuttaa palvelinta.
+
+- Voimme käyttää **blokkaamattomia pistokkeita** ja **I/O-kanavien
+  multipleksointia**. Käyttöjärjestelmän tarjoamien mekanismien avulla voidaan
+  odottaa tapahtumia useista syötelähteistä, jolloin useita asiakkaita voidaan
+  käsitellä samanaikaisesti (mutta ei rinnakkain) yhdessä säikeessä.
+  Yksisäikeisen toteutuksen rajoituksena on, että se käyttää vain yhtä
+  suoritinydintä eikä siksi välttämättä hyödynnä nykyaikaisen moniydinpalvelimen
+  koko kapasiteettia.
+
+- Jokaiselle saapuvalle asiakkaalle voidaan käynnistää **oma säie**. Useiden
+  säikeiden avulla voidaan käyttää useita suoritinytimiä, mutta uuden säikeen
+  käynnistäminen on käyttöjärjestelmälle verrattain raskas operaatio.
+
+- Voimme käyttää **ennalta luotua säiejoukkoa** ja antaa uudet asiakasyhteydet
+  käsiteltäviksi sitä mukaa, kun säikeitä vapautuu edellisistä tehtävistä.
+
+- **Asynkroninen I/O** on async/await-rakenteiseen perustuva ohjelmointimalli,
+  jossa operaatiot jaetaan tehtäviksi. Tehtäviä hallitsee ohjelmistokirjaston
+  tarjoama, sovellusprosessin sisällä toimiva ajoympäristö. Ajoympäristö voi
+  toimia yhdessä säikeessä tai hyödyntää useita säikeitä rinnakkaisuuden ja
+  käytettävissä olevien suoritinytimien paremmaksi hyödyntämiseksi.
+
+- Joskus kannattaa käynnistää **erillinen käyttöjärjestelmäprosessi** asiakkaan
+  istuntoa varten. Tämä on käyttöjärjestelmälle raskas operaatio, mutta se
+  eristää asiakasistunnot hyvin toisistaan. Menetelmä soveltuu esimerkiksi
+  SSH:n kaltaisten etäkomentoistuntojen toteuttamiseen.
+
+Nämä toteutustavat eivät sulje toisiaan pois. Tuotantojärjestelmissä yhdistetään
+usein eri menetelmiä järjestelmän tarpeiden mukaan. Tässä moduulissa käsitellään
+kahta ensimmäistä tapaa, ja monisäikeisyyteen ja asynkroniseen I/O:hon palataan
+hieman myöhemmin.
+
 ## Yksinkertainen iteratiivinen palvelin
 
 Tutustutaan seuraavaksi GitHub-repositoriomme
@@ -282,7 +324,18 @@ palvelimellä jolla on monta suoritinta käytettävissä.
 ## Dockerin perusteet
 
 Dockerilla sovellus voidaan paketoida ajoympäristönsä kanssa niin, että se
-toimii yhdenmukaisesti eri laitteilla. Tällä kurssilla Dockeria käytetään
+toimii yhdenmukaisesti eri laitteilla. Docker-**kontit** käyttävät Linux-
+käyttöjärjestelmän mekanismeja, kuten
+[nimiavaruuksia](https://en.wikipedia.org/wiki/Linux_namespaces) ja
+[cgroup-ryhmiä](https://en.wikipedia.org/wiki/Cgroups), sovellusprosessien
+eristämiseen sekä resurssien, tiedostojärjestelmien ja verkkoyhteyksien käytön
+hallintaan. Docker-**kuva** sisältää kontin luomiseen ja suorittamiseen
+tarvittavan tiedostojärjestelmän ja määritykset. Dockeria käytetään usein
+verkkopalvelujen tarjoamiseen esimerkiksi datakeskuksissa, joissa
+orkestrointijärjestelmä voi dynaaamisesti hajauttaa, hallita ja skaalata
+kontteja useille palvelimille.
+
+Tällä kurssilla Dockeria käytetään
 palvelintoteutusten siirtämiseen paikallisilta koneilta Aallon ylläpitämälle
 kurssipalvelimelle. Dockerin avulla palvelinsovellusta voidaan ensin testata
 paikallisesti ja siirtää se sitten palvelimelle, jossa kaikki pääsevät
@@ -292,8 +345,8 @@ Ensin luodaan Docker-kuva, joka sisältää sovelluksen tiedostojärjestelmän j
 tarvittavat metatiedot. `Dockerfile` määrittää ohjeen kuvan rakentamiseen.
 Docker-kuvat koostuvat tiedostojärjestelmäkerroksista, jotka yleensä rakentuvat
 peruskuvan päälle. Peruskuva voi sisältää esimerkiksi Linuxin perustyökalut.
-Kerroksia voidaan jakaa kuvien kesken, mikä lyhentää niiden rakennusaikaa ja
-vähentää tallennustilan käyttöä.
+Kerroksia voidaan tallentaa välimuistiin ja jakaa kuvien kesken, mikä lyhentää
+niiden rakennusaikaa ja vähentää tallennustilan käyttöä.
 
 Docker-kontti on kuvan käynnissä oleva ilmentymä. Suurissa palveluissa Dockeria
 käytetään palveluiden dynaamiseen replikointiin ja skaalaamiseen useisiin,
@@ -304,6 +357,14 @@ tarvitsevat voivat löytää ja ottaa niitä käyttöön. Tällä kurssilla reki
 käytetä. Sen sijaan kurssipalvelin rakentaa Docker-kuvat opiskelijoiden
 Git-repositorioiden perusteella ja suorittaa ne palvelimella, jotta
 asiakastoteutukset voivat muodostaa niihin yhteyden.
+
+Alla oleva kuva näyttää kurssipalvelimemme Docker-järjestelyn, ja kuinka pyyntö
+`run-docker` rajapintaan ottaa ensin git-kloonin opiskelijan repositoriasta, ja
+rakentaa sen jälkeen Docker-kuvan repositoriossa olevan `Dockerfile`:n pohjalta
+ja ajaa kontainerin. Lisätietoja rajapinnan toiminnasta on tehtäväkuvauksessa
+tämän sivun lopussa.
+
+![Kurssipalvelimen Docker-asetelma](/images/server-docker.svg){: width="90%" .center-img }
 
 Useimmissa järjestelmissä helpoin tapa asentaa Docker paikallisesti on asentaa
 [Docker Desktop](https://docs.docker.com/desktop/), joka on saatavilla

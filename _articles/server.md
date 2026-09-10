@@ -97,6 +97,46 @@ remembering that by default read and write calls may block program execution
 indefinitely, unless concurrency and non-blocking operation is taken care of
 appropriately.
 
+## Different server approaches
+
+There are different ways of designing server implementation, depending on the
+application needs and scalability requirements. For example, the following are
+some common approaches:
+
+- The simplest form is a single-threaded **iterative server** that processes
+  client connections one at a time without any concurrency. This may be
+  applicable for very small tasks and small tests, but otherwise not very good
+  option for server design.
+
+- We can apply **non-blocking sockets** and **I/O multiplexing** using OS
+  mechanisms that allow waiting for events from multiple input sources, where
+  multiple clients can be handled concurrently (but not in parallel) in a single
+  thread. Limitation of single-threaded approach is, that it only uses single
+  CPU core, and therefore may not leverage the full processing capacity that
+  typically is available in a multi-core server.
+
+- Is is possible to spawn a **separate thread for each incoming client**. With
+  multiple threads multiple CPU cores can be used, but spawning a new thread is
+  somewhat costly operation for the operating system.
+
+- We can use a **preallocated thread pool**, and assign new client connections
+  as a thread becomes available in a pool.
+
+- **Asynchronous I/O** is a programming model based on async/await primitives,
+  where operations are distributed to tasks that are managed by a runtime
+  environment running in the application process context as provided by a
+  software library. The runtime can run in a single thread, or it can leverage
+  multiple threads for better parallelism by the available CPU cores.
+
+- Sometimes it makes sense to spawn a **separate operating system process** to
+  run the client session. This is an heavy operation for the operating system,
+  but allows good isolation between client sessions, and is applicable, for
+  example, to implement remote shell sessions, such as SSH.
+
+These approaches are not exclusive. Production systems often combine different
+approaches for their needs. We will discuss the first two in this module, and
+return to multithreading and asynchronous I/O a little later.
+
 ## Simple iterative server
 
 We will now take a look at
@@ -272,18 +312,27 @@ resources at a server with multiple CPUs.
 
 ## Docker basics
 
-Docker is a way to package an application with its runtime environment so that
-it behaves consistently across different machines. On this course we will use
-Docker to deploy the server implementations between your local machines to the
-course servers hosted by the university. Docker allows you to test the
-application first locally and then move it to a server where everyone can access
-it.
+Docker provides a way to package an application together with its runtime
+environment so that it can run consistently across different machines. Docker
+**containers** use Linux OS mechanisms such as
+[namespaces](https://en.wikipedia.org/wiki/Linux_namespaces) and
+[cgroups](https://en.wikipedia.org/wiki/Cgroups) to isolate application
+processes and control their access to resources, filesystems, and networks. A
+Docker **image** contains the filesystem and configuration needed to create and
+run a container. Docker is often used to deploy network services, for example
+inside datacenters, where an orchestration system can dynamically distribute,
+manage and scale containers across multiple servers.
+
+On this course we will use Docker to deploy the server implementations between
+your local machines to the course servers hosted by the university. Docker
+allows you to test the application first locally and then move it to a server
+where everyone can access it.
 
 First, one produces a Docker image that contains the filesystem and needed
 metadata for the application. `Dockerfile` specifies the recipe for building an
 image. Docker images consists of filesystem layers, typically extending a base
 image (for example one that contains the basic Linux tools). Layers can be
-shared between images, reducing build time and storage use.
+cached and shared between images, reducing build time and storage use.
 
 Docker container is a running instance of a image. On large services, Docker is
 used to dynamically replicate and scale services into multiple, typically
@@ -295,9 +344,17 @@ registry, but the course server builds Docker images based on student git
 repositories, and then runs them on the server, so that they are accessible by
 client implementations.
 
+The below image shows the Docker setup we are applying at our course server, and
+how a request to `run-docker` API first takes a git clone from the student
+repository, then build the Docker images based on the `Dockerfile` in the
+repository and then runs the container. More detailed description of the API is
+in the Assignment description at the end.
+
+![Docker setup at course server](/images/server-docker.svg){: width="90%" .center-img }
+
 On most systems, easiest way to get Docker in a local system is to install
 [Docker Desktop](https://docs.docker.com/desktop/) that is available in Windows,
-Mac and Linux. Docker desktop provides a graphical user interface for managing
+Mac OS and Linux. Docker desktop provides a graphical user interface for managing
 the containers in the local desktop system, but also comes with the command line
 tools discussed below.
 
