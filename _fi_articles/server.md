@@ -492,6 +492,8 @@ Joissakin projekteissa voi esimerkiksi olla paketteja, jotka sisältävät
 suuremman ohjelmiston tarvitsemia kirjastoja, sekä paketteja, jotka
 sisältävät näitä kirjastoja käyttäviä ajettavia ohjelmia.
 
+![Ehdotus työtilan rakenteeksi](/images/server-workspace.svg){: width="100%" .center-img }
+
 Asiakas–palvelinprojektia varten on laadittu tätä rakennetta esittelevä
 **[project-template](https://github.com/PasiSa/pronets/tree/main/examples/project-template)**-esimerkki,
 jota voit halutessasi käyttää oman työsi pohjana. Projektipohjassa viitataan
@@ -533,6 +535,28 @@ Git-repositoriossa. Asiakas- ja palvelintoteutukset kannattaa sijoittaa samaan
 repositorioon ja samaan Rust-työtilaan erillisiksi paketeiksi edellä kuvatulla
 tavalla.
 
+Voit luoda Rust-työtilan aiempaan git-repositorioosi esimerkiksi seuraavalla
+tavalla:
+
+1. Luo repositoriosi juureen työtila-tason `Cargo.toml`, joka sisältää
+   seuraavan:
+
+```rust
+[workspace]
+members = ["client", "server"]
+resolver = "2"
+```
+
+{:start="2"}
+
+2. Luo paketit asiakas- ja palvelintoteutuksia varten omiin hakemistoihinsa
+   käyttäen `cargo new` - komentoa:
+
+```
+cargo new client
+cargo new server
+```
+
 **Osa 1**: Toteuta yksinkertainen palvelin, joka kuuntelee saapuvia yhteyksiä
 sinulle varatussa portissa. Tässä vaiheessa palvelin tunnistaa vain yhden
 viestityypin: testiviestin **TST**, jolla voidaan tarkistaa, että palvelin on
@@ -549,13 +573,18 @@ noudattaa on seuraavanlainen:
 
 - Seuraavana on toinen **32-bittinen etumerkitön kokonaisluku**, joka sisältää
   **viestin tunnisteen** verkon tavujärjestyksessä. Myöhemmin tunnisteen avulla
-  voidaan yhdistää vastaukset erilaisiin pyyntöviesteihin.
+  voidaan yhdistää vastaukset niitä vastaaviin pyyntöviesteihin.
 
 - Tämän jälkeen tulee viestityyppi "TST", välilyönti ja vapaamuotoinen sisältö.
 
 Kun palvelin vastaanottaa tällaisen viestin, sen täytyy lähettää sama
 viestisisältö takaisin asiakkaalle käyttäen samaa pituutta ja viestin
 tunnistetta.
+
+Alla oleva kuva havainnollistaa viestiformaattia, sekä antaa esimerkin
+viestistä, mukaanlukien sen tavuesitys verkkoon kirjoitettuna.
+
+![Viestiformaatti](/images/protocol-format.svg){: width="90%" .center-img }
 
 **Osa 2**: Toteuta myös asiakasohjelma, joka lähettää TST-viestin, jotta voit
 testata palvelinta.
@@ -583,7 +612,8 @@ seuraavat kentät:
   `base-1`. Protokollia käsitellään tarkemmin seuraavassa moduulissa.
 
 Huomaa, että rakenne on sama kuin edellisessä tehtävässä toteutetulla
-`/fetch-git`-päätepisteellä, mutta mukana on pari lisäkenttää.
+`/fetch-git`-päätepisteellä, mutta mukana on pari lisäkenttää. Voit siis
+laajentaa aiempaa toteutustasi `run-docker`-pyyntöä varten.
 
 Toteuta ohjelma, joka lähettää HTTP-pyynnön ja odottaa vastausta. Toiminto voi
 olla myös esimerkiksi osa asiakasohjelmasi koodia. Kun kurssipalvelin
@@ -599,7 +629,8 @@ ja viimeisimmän TST-viestin tuloksen osoitteessa
 **[https://pronets1.dice.aalto.fi/](https://pronets1.dice.aalto.fi/)**.
 
 Kirjoita lyhyt raportti, jossa dokumentoit etenemisesi edellä kuvatuissa
-vaiheissa. Kerro jokaisesta askelesta miten lähestyit ongelmaa, mitä haasteita
+vaiheissa. Aloita raportti kertomalla projektisi nimi.
+Kerro jokaisesta askelesta miten lähestyit ongelmaa, mitä haasteita
 kohtasit, ja miten sait ne ratkaistua. Löydätkö oman konttisi pavelimen
 containers-näkymästä, ja näkyykö sen kohdalla teksti "OK"?
 

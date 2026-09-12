@@ -475,6 +475,8 @@ shared workspace in a single git repository. Each package has a separate
 projects there could be packages for the libraries needed as part of a larger
 software, and other packages for binaries using these libraries.
 
+![Proposed workspace structure](/images/server-workspace.svg){: width="100%" .center-img }
+
 For a client-server project, we have example
 "**[project-template](https://github.com/PasiSa/pronets/tree/main/examples/project-template)**"
 presenting this setup that you can use as a basis for your work, if you so wish.
@@ -514,6 +516,28 @@ in the beginning of the course. It is recommended that you include the client
 and server implementations in the same repository and same Rust project
 workspace, as separate packages as described above.
 
+You create the Rust workspace in your existing git repository in the following
+way, for example:
+
+1. Create the workspace-level `Cargo.toml` file at the root of the repository
+   with the following content:
+
+```rust
+[workspace]
+members = ["client", "server"]
+resolver = "2"
+```
+
+{:start="2"}
+
+2. Create client and server packages each in their own directories using `cargo
+new` command:
+
+```
+cargo new client
+cargo new server
+```
+
 **Part 1**: Implement a simple server that listens to incoming connections at
 the port assigned for you. At this point the server recognizes only one type of
 message: Test message "**TST**" that can be used to test that the server is
@@ -528,13 +552,18 @@ Our message structure, that also the TST message applies is as follows:
 
 - Then there should be another **32-bit unsigned integer** that is the **message
   identifier**, in network byte order. Later on, this can be used to identify
-  responses to different kinds of request messages.
+  responses to the corresponding request messages.
 
 - After this there is message type "TST" followed by space and arbitrary
   content.
 
 When server receives this message, it must echo the same message back to the
 client, using the same length and message identifier.
+
+Below is an illustration of the message format, along with an example (including
+the message as bytes).
+
+![Message format](/images/protocol-format.svg){: width="90%" .center-img }
 
 **Part 2**: Implement also a client application that sends a TST message, so
 that you can test the server.
@@ -563,7 +592,8 @@ the following fields:
   "`base-1`". We will explain the protocols a bit more in next module.
 
 Note that the structure is same as with the "`/fetch-git`" endpoint developed in
-last assignment, with couple of additional fields.
+last assignment, with couple of additional fields. You can extend the
+previous code to implement the `run-docker` request.
 
 Implement a program that sends the HTTP request (or it could be part of your
 client code, for example) and waits for response. When the server receives the
@@ -579,7 +609,8 @@ with their ports, and the outcome of the latest TST message at
 **[https://pronets1.dice.aalto.fi/](https://pronets1.dice.aalto.fi/)**
 
 Write a short report where you document the progress going forward with the
-above steps. For each step, tell shortly how did you approach the problem, what
+above steps. Start the report by giving your project name.
+For each step, tell shortly how did you approach the problem, what
 difficulties you encountered, and how did your solve them. Can you find your
 container in the server containers view, and does it show "OK" for your
 container? As before, include also the following information:
