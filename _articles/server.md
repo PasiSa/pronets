@@ -137,7 +137,7 @@ These approaches are not exclusive. Production systems often combine different
 approaches for their needs. We will discuss the first two in this module, and
 return to multithreading and asynchronous I/O a little later.
 
-## Simple iterative server
+## Simple server
 
 We will now take a look at
 **[simple-server](https://github.com/PasiSa/pronets/tree/main/examples/simple-server/src/main.rs)**
@@ -167,25 +167,49 @@ address (running this on the simple-client directory of the repository):
 
     cargo run -- 127.0.0.1:2000 Hello
 
+### Creating socket and binding to local address
+
 The simple server starts by creating a passive server socket and binding it to
-the address given as command line argument. `server` is the passive server
-socket listening for connections.
+the address given as command line argument. Variable `server` is the passive
+server socket listening for connections. If `bind()` call fails, for example due
+to invalid parameters, or because port was already in use, we may as well exit
+the server.
 
 ```rust
 let server = TcpListener::bind(&args[1])?;
 ```
 
+### Accepting incoming connection
+
 Then it starts a loop that starts by waiting for the next incoming client. The
-`accept` call may block the execution for a long time.
+`accept()` call may block the execution for a long time.
 
 ```rust
-let (mut socket, address) = server.accept()?;
+let (mut socket, address) = match server.accept() {
+    Ok((socket, address)) => (socket, address),
+    Err(e) if e.kind() == ErrorKind::ConnectionAborted => {
+        eprintln!("Client aborted connection: {e}");
+        continue;
+    }
+    Err(e) => return Err(e),
+};
 println!("Accepting connection from {}", address.to_string());
 ```
 
 When the call completes, we will get the active `socket` representing the
 connected client, and the address of the client, that will be printed on the
 terminal.
+
+In server programming it is **important to process the errors** properly,
+because we want our server to run for a long time without human interaction. In
+the case of accept we distinguish two kinds of errors: it is possible that error
+happens if system runs out of resources, for example out of file descriptors
+used for the socket. In this case we determine it is not useful to continue
+execution, because the condition may be more persisting. On the other hand,
+client may have aborted the connection while waiting to be accepted. In that
+case we should continue with the next client.
+
+### Reading data from socket
 
 After this, the server will read some data from the active client socket,
 assuming that client knows that it is expected to write something. If the client
@@ -194,12 +218,48 @@ did not write anything, but would rather wait some input from elsewhere, the
 
 ```rust
 let mut buf: [u8; 160] = [0; 160];
-let readn = socket.read(&mut buf)?;
+let readn = match socket.read(&mut buf) {
+    Ok(readn) => {
+        if readn == 0 {
+            println!("Client closed connection");
+            continue;
+        }
+        readn
+    }
+    Err(e) => {
+        eprintln!("Error reading socket: {e}");
+        continue;
+    }
+};
 ```
+
+The read call returns a `Result` type variable as most socket options. In
+successful case it the number of bytes actually read, or **0** which means that
+the other end has closed the socket, in which case we can move to process the
+next incoming client. Typically it is important to handle this case, if the
+server has some state associated with the client that needs to be cleaned up. It
+is also possible that there is some sort of error with the read call, in which
+case we will also move to process the next client.
+
+### Echoing data back
 
 Finally, the server echoes the data that was read back to the client, and closes
 the socket, as the lifetime of the local `socket` variable ends at the end of
-the loop.
+the loop. Note the slice syntax in write argument: because it is possible (and
+common), that we didn't read the full allocated buffer from client, we will only
+write the number of bytes actually read. This way we tell that we operate only
+on a part of the buffer. Again, we need to process errors separately, to keep
+the server running.
+
+```rust
+let writen = match socket.write(&buf[..readn]) {
+    Ok(writen) => writen,
+    Err(e) => {
+        eprintln!("Write error: {e}");
+        continue;
+    }
+};
+```
 
 ## I/O multiplexing and non-blocking sockets
 

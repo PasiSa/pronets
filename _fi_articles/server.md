@@ -142,7 +142,7 @@ usein eri menetelmiä järjestelmän tarpeiden mukaan. Tässä moduulissa käsit
 kahta ensimmäistä tapaa, ja monisäikeisyyteen ja asynkroniseen I/O:hon palataan
 hieman myöhemmin.
 
-## Yksinkertainen iteratiivinen palvelin
+## Yksinkertainen palvelin
 
 Tutustutaan seuraavaksi GitHub-repositoriomme
 **[simple-server](https://github.com/PasiSa/pronets/tree/main/examples/simple-server/src/main.rs)**-esimerkkiin,
@@ -173,25 +173,50 @@ repositorion simple-client-hakemistossa:
 
     cargo run -- 127.0.0.1:2000 Hello
 
+### Pistokkeen luominen ja sitominen paikalliseen osoitteeseen
+
 Yksinkertainen palvelin aloittaa luomalla passiivisen palvelinpistokkeen ja
-sitomalla sen komentoriviparametrissa annettuun osoitteeseen. `server` on
-yhteyksiä kuunteleva passiivinen palvelinpistoke.
+sitomalla sen komentoriviparametrissa annettuun osoitteeseen. Muuttuja `server`
+on yhteyksiä kuunteleva passiivinen palvelinpistoke. Jos `bind()`-kutsussa tulee
+virhe, esimerkiksi virheellisten parametrien takia, tai koska haluttu portti on
+jo käytössä, voimme lopettaa palvelinohjelman tältä erää.
 
 ```rust
 let server = TcpListener::bind(&args[1])?;
 ```
 
+### Sisääntulevan yhteyden hyväksyminen
+
 Seuraavaksi palvelin käynnistää silmukan, jonka alussa se odottaa seuraavaa
-saapuvaa asiakasta. `accept`-kutsu voi pysäyttää ohjelman suorituksen pitkäksi
+saapuvaa asiakasta. `accept()`-kutsu voi pysäyttää ohjelman suorituksen pitkäksi
 aikaa.
 
 ```rust
-let (mut socket, address) = server.accept()?;
+let (mut socket, address) = match server.accept() {
+    Ok((socket, address)) => (socket, address),
+    Err(e) if e.kind() == ErrorKind::ConnectionAborted => {
+        eprintln!("Client aborted connection: {e}");
+        continue;
+    }
+    Err(e) => return Err(e),
+};
 println!("Accepting connection from {}", address.to_string());
 ```
 
 Kun kutsu päättyy, saadaan yhteyden muodostanutta asiakasta vastaava aktiivinen
 `socket`-pistoke sekä asiakkaan osoite, joka tulostetaan terminaali-ikkunaan.
+
+Palvelinohjelmoinnissa on **tärkeä käsitellä virhetilanteet** hyvin, koska
+palvelimen tulisi toimia pitkään ilman ihmisen väliintuloa.
+`accept()`-kutsun kohdalla käsittellään kahdenlaisia virheitä erikseen: virhe
+voi syntyä, jos järjestelmän resurssit loppuvat, esimerkiksi jos pistokkeita
+varten ei ole enää saatavilla tiedostokuvaajia. Tässä tapauksessa ohjelman
+suoritusta ei jatketa, koska tilanne voi olla pitkäkestoinen. Toisaalta
+asiakasohjelma on voinut keskeyttää yhteyden odottaessaan sen hyväksymistä.
+Tällöin palvelimen kannattaa siirtyä käsittelemään seuraavaa asiakasta ja jatkaa
+suoritustaan.
+
+### Tiedon lukeminen pistokkeesta
 
 Tämän jälkeen palvelin lukee tietoa aktiivisesta asiakaspistokkeesta olettaen,
 että asiakas tietää, että sen odotetaan kirjoittavan jotakin. Jos asiakas ei
@@ -200,11 +225,50 @@ pysäyttäisi ohjelman suorituksen pitkäksi aikaa.
 
 ```rust
 let mut buf: [u8; 160] = [0; 160];
-let readn = socket.read(&mut buf)?;
+let readn = match socket.read(&mut buf) {
+    Ok(readn) => {
+        if readn == 0 {
+            println!("Client closed connection");
+            continue;
+        }
+        readn
+    }
+    Err(e) => {
+        eprintln!("Error reading socket: {e}");
+        continue;
+    }
+};
 ```
 
+`read()`-kutsu palauttaa `Result`-tyyppisen arvon kuten useimmat
+pistokeoperaatiot. Onnistuessaan kutsu palauttaa luettujen tavujen määrän tai
+arvon **0**, joka tarkoittaa, että toinen osapuoli on sulkenut pistokkeen. Tällöin
+voimme siirtyä käsittelemään seuraavaa saapuvaa asiakasta. Tämän tapauksen
+käsittely on tärkeää etenkin silloin, kun palvelimella on asiakkaaseen liittyviä
+tilatietoja tai resursseja, jotka täytyy vapauttaa yhteyden sulkeutuessa. Myös
+`read`-kutsussa voi tapahtua virhe, jolloin siirrymme niin ikään käsittelemään
+seuraavaa asiakasta.
+
+### Tiedon kaiuttaminen takaisin
+
 Lopuksi palvelin lähettää lukemansa tiedon takaisin asiakkaalle ja sulkee
-pistokkeen, kun paikallisen `socket`-muuttujan elinkaari päättyy silmukan lopussa.
+pistokkeen, kun paikallisen `socket`-muuttujan elinkaari päättyy silmukan
+lopussa. Kannattaa huomoida `write()`-kutsun argumentissa käytetty
+viipalesyntaksi: on mahdollista (ja tavallista), ettei asiakkaalta luettu tieto
+täytä koko varattua puskuria. Siksi annamme kirjoitettavaksi vain luettuja
+tavuja vastaavan osan puskurista. Näin ilmaisemme, että käsittelemme vain osaa
+puskurista. Myös tässä tapauksessa virheet täytyy käsitellä erikseen, jotta
+palvelin voi jatkaa toimintaansa.
+
+```rust
+let writen = match socket.write(&buf[..readn]) {
+    Ok(writen) => writen,
+    Err(e) => {
+        eprintln!("Write error: {e}");
+        continue;
+    }
+};
+```
 
 ## I/O-kanavien multipleksointi ja blokkaamattomat pistokkeet
 
