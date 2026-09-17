@@ -32,7 +32,7 @@ Kurssimateriaali koostuu seuraavista osioista:
 1. [Johdanto ja verkon perustyökalut](intro/)
 1. [Rustin perusteet ja asiakaspistokkeet](rust-basics/)
 1. [Palvelinohjelmointi ja Docker-kontit](server/)
-1. Protokollasuunnittelu ja projektien aloitus
+1. [Protokollasuunnittelu ja projekti](protocol/)
 1. Testaus ja havainnoitavuus
 1. Rinnakkaisuus ja asynkroninen ohjelmointi
 1. Tietoturva

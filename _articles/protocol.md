@@ -1,5 +1,7 @@
 ---
 title: Protocol design and projects
+lang: en
+translation_key: protocol
 ---
 
 This part of the course starts a project that you will start working on until
@@ -60,10 +62,14 @@ All protocol messages should start with the following header:
   in the same connection (unless all 32-bit identifiers are already used, after
   which the ID number allocation can start from the beginning).
 - Three characters followed by a space, that indicate the **message type**. The
-  characters MUST be from the 7-bit ASCII character range, i.e., they can be
-  parsed in compatible way following the UTF-8 encoding. The characters SHOULD
-  consist of letters A-Z in upper case letters.
+  characters should consist of letters A-Z in upper case letters, or number
+  characters, if needed.
 - What follows after this is message dependent, as described below.
+
+See below the picture shown in previous module, that shows the above described
+structure:
+
+![Message format](/images/protocol-format.svg){: width="90%" .center-img }
 
 ### Common messages, "base-1"
 
@@ -74,7 +80,7 @@ All protocol messages should start with the following header:
     - **Test sequence**: Sequence of bytes that must be echoed by the other end.
       The format of these bytes can be anything, they can be an UTF-8 encoded
       string or any binary sequence of bytes. The test sequence may be long (up
-      to 4 GB), the length is only limited by the total message length.
+      to almost 4 GB), the length is only limited by the total message length.
   - **Response:** The same message echoed back to the other end. Therefore, also
     the message length and message ID are same as in the request message.
   - **Example:** [length: 22]`TST 0123456789`
@@ -86,8 +92,6 @@ In addition to the TST message:
 - **USR** (User registration). Client sends this message to associate username
   with the current TCP connection. This should be sent as the first message
   after connection is made (apart from TST message that is always accepted).
-  Later, after we implement TLS security and JWT authentication, this message
-  may be deprecated.
   - **Parameters:**
     - **Username**: UTF-8 encoded string following the USR message type. The
       length of the string can be determined from the message length field in
@@ -126,7 +130,7 @@ In addition to the TST message:
 - **MSG** (Message, from server). Used by server to broadcast a message from an
   user to everyone on the channel. The payload of the server-originated message
   differs slightly from the client-originated message. Note that the Message ID
-  is allocated by server, it is not the same than in the client-originate MSG.
+  is allocated by server, it is not the same than in the original MSG.
   Server should not reuse same message ID twice with a particular client.
   - **Parameters:**
     - **Sender**: Username of the sender of the message.
@@ -158,16 +162,16 @@ proven to be sustainable in enabling innovative uses of the old protocol
 technology.
 
 In 1996 the **[Internet Architecture Board](https://www.iab.org/about/)** in the
-**[IETF](https://www.ietf.org/)** produced a **[RFC 1958, "Architectural
-Principles of the Internet"](https://datatracker.ietf.org/doc/html/rfc1958)**
-that proposes design principles for developing new Internet protocols, as
-collected by a group of experienced Internet engineers. Even though the document
-is more than 30 years old, the principles are still good to be thought when
-developing protocols. Many of them are also useful as general software design
-principles.
+**[IETF](https://www.ietf.org/)** that defines the Internet protocol standards
+produced a **[RFC 1958, "Architectural Principles of the
+Internet"](https://datatracker.ietf.org/doc/html/rfc1958)** that proposes design
+principles for developing new Internet protocols, as collected by a group of
+experienced Internet engineers. Even though the document is more than 30 years
+old, the principles are still good to be thought when developing protocols. Many
+of them are also useful as general software design principles.
 
 Here are the principles from the "General Desing Issues" section of the
-document, with some additional commentary (by myself, can be discussed):
+document, with some additional commentary (by myself, can be argued):
 
 1. **Heterogeneity is inevitable and must be supported by design.** The recent
    history has shown that the communication technologies and use cases have
@@ -246,7 +250,8 @@ document, with some additional commentary (by myself, can be discussed):
     reasonable limits.** There maybe different evolutions and versions of a
     protocol, and some implementations may not support all features. Therefore
     the protocol should be designed in such way that unknown messages can be
-    easily ignored, while finding where to continue in the TCP stream.
+    easily ignored, while finding where to continue in the TCP stream, for
+    example.
 
 13. **All specifications should use the same terminology and notation, and the
     same bit- and byte-order convention.** This is more a guideline for IETF
@@ -265,8 +270,9 @@ At this point you can choose a project topic to work on during the rest of the
 course. Here are some common requirements for all projects:
 
 - The projects must implement the base protocol as specified in the course
-  material. The extended protocol messages must use the same header format
-  (length, ID, type name) as the base protocol messages on the TCP channel.
+  material. The new project-specific protocol messages must use the same header
+  format (length, ID, type name) as the base protocol messages on the TCP
+  channel.
 - The server implementations must be able to serve multiple clients concurrently
   and timely.
 - By the end of the course, the communication should use TLS (apart from UDP
@@ -274,8 +280,8 @@ course. Here are some common requirements for all projects:
 - The project should involve real-time communication over UDP. This could be
   some collaborative editing feature, a real-time component in a multiplayer
   game, or for a more challenging option, voice chat between connected clients
-  (there are available Rust crates for sampling audio into data chunks using a
-  chosen codec, and playing them back)
+  (there are available Rust crates for sampling audio from microphone into data
+  chunks using a chosen codec, and playing them back)
 
 The goal is that for each project topic there are at least two independent
 client and server implementations by two different groups (or individuals, if
@@ -286,9 +292,9 @@ common protocol messages that are mutually understood between implementations.
 ## Project topics
 
 Here are project topics for you to choose from. All projects will have a chat
-forum, as implemented as part of the base protocol in the assignments. The
+forum, that was implemented as part of the base protocol in the assignments. The
 following descriptions propose ideas about possible features and related
-communication, but you get to specify the actual protocol messages
+communication needs, but you get to specify the actual protocol messages
 collaboratively with others working on the same topic.
 
 ### Collaborative whiteboard
@@ -302,8 +308,9 @@ named whiteboards (like there can be multiple chat rooms).
 Likely protocol actions needed:
 
 - Add element to given coordinates. The message should include also attributes
-  depending on the element type. When one client adds an element, other users
-  connected to the whiteboard should see it, too.
+  depending on the element type (e.g., the text to be added, dimensions of the
+  rectangle, etc.). When one client adds an element, other users connected to
+  the whiteboard should see it, too.
 
 - Get all current elements on the whiteboard. When a new client joins an
   existing whiteboard, it needs to request its current status. The response to
@@ -314,7 +321,7 @@ Likely protocol actions needed:
   may get messy over time, and therefore resetting it to empty state may be
   useful.
 
-Real-time element:
+Idea for a real-time element (using UDP):
 
 - There could be an interactive pointer (e.g. different colors for different
   clients).
@@ -324,9 +331,9 @@ Real-time element:
 Clients work on a shared text document that can be edited at the same time. Pay
 attention to how to manage possible edits to a same location in the document,
 and how to keep it consistent between clients. Optionally, there could be
-different ways of highlighting the document (colors, effects, or shapes). It
-could also be possible to download the document, or upload some earlier text as
-basis.
+different ways of highlighting the document (colors, effects, or shapes). As one
+possible additional feature, it could also be possible to download the document,
+or upload some earlier text as basis.
 
 Likely protocol actions needed:
 
@@ -340,7 +347,7 @@ Likely protocol actions needed:
 
 - Erase content from the document
 
-Real-time element:
+Idea for a real-time element (using UDP):
 
 - Interactive cursor to follow where user is currently working on
 
@@ -348,22 +355,22 @@ Real-time element:
 
 Simple 2D game where multiple players race on a track, or just in a free
 environment with some obstacles. Nice graphics is not a design goal in this
-project, but it is easy to find free-to-use sprite art from the network you can
-use. For each car the server and clients should track at least the current
-position, orientation, and velocity. You may also have additional features for
-the cars. In minimal implementation the cars may just race freely, but you could
-also add a competitive element (e.g., race 3 laps, take time). There should also
-be some form of collision detection (even if not accurate). Optionally, you
-could also have automotive NPC cars, that are operated by a separate client,
-i.e., there could be clients that interact with user, and other kind of clients
-that just operate the cars, that don't necessarily even have a user interface,
-but run in the background.
+project, but it is easy to find free-to-use sprite art (e.g. for cars) from the
+network you can use. For each car the server and clients should track at least
+the current position, orientation, and velocity. You may also have additional
+features for the cars. In minimal implementation the cars may just race freely,
+but you could also add a competitive element (e.g., race 3 laps, take time).
+There should also be some form of collision detection (even if not accurate).
+Optionally, you could also have automotive NPC cars, that are operated by a
+separate client, i.e., there could be clients that interact with user, and other
+kind of clients that just operate the cars, that don't necessarily even have a
+user interface, but run in the background.
 
 Because network communication has delay, the server should maintain the
 authoritative status of each car, given their position and velocity and progress
 of time. To make the experience smoother, also clients can also update the
 locations locally knowing these attributes, but sync the actual status from
-server frequently.
+server frequently enough.
 
 Likely protocol actions needed:
 
@@ -383,21 +390,22 @@ Likely protocol actions needed:
 - End game. At some point the game state needs to be cleaned for a new game, and
   clients informed about it.
 
-Real-time element:
+Idea for a real-time element (using UDP):
 
 - Real-time car position updates can be done using UDP
 
 ### Drone simulator
 
-There would be series of drones on a shared 2D map with obstacles. You can specify
-the purpose of the drones freely. They could be delivery drones, or perform some
-sort of surveillance tasks. The drones can be human controlled or autonomous.
-The client controlling autonomous drones does not necessarily need user
-interface. Instead, there could be a separate kind of client that just offers
-the user interface to monitor the drone activities. One of the clients could be
-a coordinator that communicates tasks to available drones.
+There would be series of drones on a shared 2D map with obstacles. You can
+specify the purpose of the drones freely. They could be delivery drones, or
+perform some sort of surveillance tasks. The drones can be human controlled or
+autonomous. The client controlling autonomous drones does not necessarily need
+user interface. Instead, there could be a separate kind of client that just
+offers the user interface to monitor the drone activities. One possible
+additional feature could be that of the clients could be a coordinator that
+communicates tasks to available drones (using some designed protocol).
 
-This implementation has much similarity with the car game, and the protocol
+This implementation may have some similarity with the car game, and the protocol
 messages could be designed in compatible way (e.g., regarding position updates,
 and drones entering and leaving the simulated environment).
 
@@ -414,8 +422,7 @@ Likely protocol actions needed:
   the map for a possible reconnection.
 
 - End simulation.
-
-Real time element:
+  Ehdotus reaaliaikaisesta toiminnosta (joka toteutetaan UDP:llä):
 
 - Position updates can be done using UDP
 
@@ -429,6 +436,8 @@ At the end of the course, a successful project has the following properties:
 
 - Documentation about the interoperability tests with other clients and servers.
 
+- The code in git repository should be well-structured and logical to follow.
+
 - The implemented project features work without major bugs.
 
 - There are comprehensive tests, particularly focusing on the communication logic.
@@ -437,59 +446,58 @@ At the end of the course, a successful project has the following properties:
   responds to actions timely. Tests for load from parallel users have been
   conducted and documented.
 
-- The project applies secure communication for the TCP streams used.
+- The project applies TLS-secured communication for the TCP streams used.
 
 - The project has a real-time component that uses UDP.
 
 Additional features involving communication are considered a plus, but not a
-requirement, for example involving download / upload of larger files for
-graphics, larger documents, etc.
+requirement, for example those proposed with project descriptions.
 
-## Useful library crates for clients
+## Useful library crates
 
 The visual appearance of client is not an evaluation criteria, but some sort of
 graphical user interface is needed for the client to do sensible actions. Below
-are some crates you may use.
+are some crates you may use. All of them should work in different systems
+(Windows, Mac, Linux).
 
 ### Graphical user interface
 
 - **[Slint](https://crates.io/crates/slint)** ([web page](https://slint.dev/))
-  is a cross-platform GUI toolkit for building user interfaces. It uses a
-  declarative UI language to describe layouts, components, animations, and
-  application state while keeping application logic separate from the interface.
-  Slint provides features such as widgets, images, transformations, animations,
-  and event handling. Slint is a good fit especially for the whiteboard client,
-  but it supports also animated textured objects, so you can also use it for a
-  simple game or drone simulation.
+  is a GUI toolkit for building user interfaces. It uses a declarative UI
+  language to describe layouts, components, animations, and application state
+  while keeping application logic separate from the interface. Slint provides
+  features such as widgets, images, transformations, animations, and event
+  handling. Slint is a good fit especially for the whiteboard client, but it
+  supports also animated textured objects, so you can also use it for a simple
+  game or drone simulation.
 
-- **[egui](https://crates.io/crates/egui)** is a cross-platform GUI library
-  based on the immediate-mode GUI approach, where the application describes the
-  interface on each frame rather than maintaining a persistent widget hierarchy.
-  It is designed to be simple to integrate into Rust applications and works well
-  for tools, editors, visualizations, debug interfaces, and interactive
-  applications. egui supports common widgets, custom drawing, input handling,
-  layouts, and graphics, and can run as a native desktop GUI or in a web browser
-  through WebAssembly.
+- **[egui](https://crates.io/crates/egui)** is a GUI library,
+  where the application describes the interface on each frame rather than
+  maintaining a persistent widget hierarchy. It is designed to be simple to
+  integrate into Rust applications and works well for tools, editors,
+  visualizations, debug interfaces, and interactive applications. egui supports
+  common widgets, custom drawing, input handling, layouts, and graphics, and can
+  run as a native desktop GUI or in a web browser through WebAssembly.
 
 - **[Macroquad](https://crates.io/crates/macroquad)** ([web
-  page](https://macroquad.rs/)) is a cross-platform game development and
-  graphics library, designed for creating 2D games, simulations, and
-  other interactive graphical applications. It provides a simple API for opening
-  windows, drawing shapes and textures, handling keyboard and mouse input,
-  playing audio, and implementing a frame-based game loop, while also supporting
-  features such as sprite rotation, collision detection through application
-  logic, and text rendering. It is a good option especially for the car game or
-  drone project, but maybe less ideal for whiteboard. Macroquad applications can
-  run natively on desktop as well as in web browsers through WebAssembly.
+  page](https://macroquad.rs/)) is a game development and graphics library,
+  designed for creating 2D games, simulations, and other interactive graphical
+  applications. It provides a simple API for opening windows, drawing shapes and
+  textures, handling keyboard and mouse input, playing audio, and implementing a
+  frame-based game loop, while also supporting features such as sprite rotation,
+  collision detection through application logic, and text rendering. It is a
+  good option especially for the car game or drone project, but maybe less ideal
+  for whiteboard. Macroquad applications can run natively on desktop as well as
+  in web browsers through WebAssembly.
 
 - **[Bevy](https://crates.io/crates/bevy)** ([web page](https://bevy.org/)) is a
   game engine written for building 2D and 3D games and interactive applications.
   Its architecture is based on an Entity Component System (ECS), where game
   objects are composed from data components and game logic is implemented as
   systems operating on those components. Bevy provides integrated support for
-  rendering, input, audio, animation, assets, scenes, physics through plugins.
-  While rich in functionality, Bevy may be more difficult to approach for a
-  beginner than Macroquad.
+  rendering, input, audio, animation, physics through plugins. While rich in
+  functionality, Bevy may be more difficult to approach for a beginner than
+  Macroquad.
 
 ### Other tools
 
@@ -504,7 +512,7 @@ are some crates you may use.
 
 <div class="assignment-frame" markdown="1">
 
-## Assignment
+## Assignment #4
 
 In this assignment we start the work on project and implement the "**base-2**"
 part of the common base protocol. We will also check if the **TST** message
@@ -518,8 +526,8 @@ add unnecessary binary files such as pdf documents to git repository, because
 they grow its size rapidly, therefore we use markdown for this.
 
 This will be the first version of the document, and it can be updated during the
-coming weeks as your plans get clarified or adjusted. The document should
-contain (at least) the following information:
+coming weeks as your plans get clarified or adjusted. At this point the document
+should contain (at least) the following information:
 
 - Name of the project
 - Short description (1-2 paragraphs) of the main idea, scope and the main
@@ -537,9 +545,9 @@ contain (at least) the following information:
   synchronize their protocols to be compatible for future interoperability tests.
 
 **Part 2:** Using the client you implemented in last assignment, send **TST**
-messages to at least two (but can be more) of the servers listed in the course
-server's **http://pronets.dice.aalto.fi/containers** view. If you find something
-to fix in your implementation, implement the fixes (the problem could be at the
+messages to at least two of the servers listed in the course server's
+**[container view](https://pronets1.dice.aalto.fi/)**. If you find something to
+fix in your implementation, implement the fixes (the problem could be at the
 other end, too, though). Report in the report the server instances you tested,
 and your findings.
 
@@ -557,17 +565,22 @@ called "**general**", that contains all users connected to server. Support for
 multiple channels can be implemented later. Do both client and server
 implementations.
 
-After you have done with the above, check that you have committed and pushed
-your changes to git. Then, set the current version running at the course server
-using the `/run-docker` endpoint at **pronets.dice.aalto.fi** following the
-instructions from previous assignment, but now use "**base-2**" as the protocol
-label.
+Note that for now, just a text client on a command line is sufficient to test
+these operations, although it doesn't harm to start working with a graphical
+user interface already, if you are motivated.
+
+After you have implemented the above parts, test your implementation locally
+using **at least two simultaneous clients** and server. When implementation
+seems to work, check that you have committed and pushed your changes to git, and
+send the `/run-docker` request to **pronets1.dice.aalto.fi** to update the
+container to the current version. Follow the instructions from previous
+assignment, but now use "**base-2**" as the protocol label.
 
 As before, shortly answer also the following questions:
 
 - How much time did you use for this assignment?
 - What was easy or difficult in the assignment?
-- What tools did you use? In particular, if you used AI assistants, tell how did
-  you use then and if they were helpful.
+- What tools or other information sources did you use? In particular, if you
+  used AI assistants, tell how did you use them and if they were helpful.
 
 </div>

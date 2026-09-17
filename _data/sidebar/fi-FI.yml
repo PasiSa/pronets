@@ -11,6 +11,8 @@
       url: /fi/rust-basics/
     - title: 3. Palvelinohjelmointi
       url: /fi/server/
+    - title: 4. Protokolla ja projekti
+      url: /fi/protocol/
 
 - title: Koodiesimerkit
   url: /examples/
