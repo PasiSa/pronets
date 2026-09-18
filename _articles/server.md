@@ -197,8 +197,8 @@ println!("Accepting connection from {}", address.to_string());
 ```
 
 When the call completes, we will get the active `socket` representing the
-connected client, and the address of the client, that will be printed on the
-terminal.
+connected client, and address of the client (IP address and TCP port), that will
+be printed on the terminal.
 
 In server programming it is **important to process the errors** properly,
 because we want our server to run for a long time without human interaction. In
@@ -241,6 +241,12 @@ server has some state associated with the client that needs to be cleaned up. It
 is also possible that there is some sort of error with the read call, in which
 case we will also move to process the next client.
 
+Note the way how the `readn` variable is assigned from the result of the `match`
+statement. This is common style in Rust. Because the error branch does not
+return value, but jumps to the next iteration of the loop, and the **Ok**
+variant of `read()` call returns `usize`-type unsigned integer, we know that as
+a result `readn` is unsigned integer representing the number of bytes read.
+
 ### Echoing data back
 
 Finally, the server echoes the data that was read back to the client, and closes
@@ -260,6 +266,22 @@ let writen = match socket.write(&buf[..readn]) {
     }
 };
 ```
+
+If we were not interested in the return value of the `write()` call, for example
+when using `write_all()`, we can still test whether the operation succeeded or
+returned error, for example in the following way:
+
+```rust
+if let Err(error) = socket.write_all(&buf[..readn]) {
+    println!("Failed to write to {}: {}", address, error);
+    continue;
+}
+```
+
+If the **Result** return value from `write_all()` is of **Err** variant, the `if
+let` condition is true and the branch is taken, with the contents of the **Err**
+variant bound to `error` variable. If the call succeeded, the condition is
+false, and processing moves forward.
 
 ## I/O multiplexing and non-blocking sockets
 

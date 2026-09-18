@@ -204,7 +204,8 @@ println!("Accepting connection from {}", address.to_string());
 ```
 
 Kun kutsu päättyy, saadaan yhteyden muodostanutta asiakasta vastaava aktiivinen
-`socket`-pistoke sekä asiakkaan osoite, joka tulostetaan terminaali-ikkunaan.
+`socket`-pistoke sekä asiakaspään osoite (IP-osoite ja TCP-portti), joka
+tulostetaan terminaali-ikkunaan.
 
 Palvelinohjelmoinnissa on **tärkeä käsitellä virhetilanteet** hyvin, koska
 palvelimen tulisi toimia pitkään ilman ihmisen väliintuloa.
@@ -249,6 +250,12 @@ tilatietoja tai resursseja, jotka täytyy vapauttaa yhteyden sulkeutuessa. Myös
 `read`-kutsussa voi tapahtua virhe, jolloin siirrymme niin ikään käsittelemään
 seuraavaa asiakasta.
 
+Huomaa, miten `readn`-muuttujan arvo saadaan `match`-lausekkeen tuloksesta.
+Tämä on Rustissa tavallinen käytäntö. Koska virhehaara ei palauta arvoa vaan
+siirtyy silmukan seuraavalle kierrokselle ja `read()`-kutsun tulosta käsittelevä
+`Ok`-haara palauttaa `usize`-tyyppisen etumerkittömän kokonaisluvun, myös
+`readn` on etumerkitön kokonaisluku, joka kertoo luettujen tavujen määrän.
+
 ### Tiedon kaiuttaminen takaisin
 
 Lopuksi palvelin lähettää lukemansa tiedon takaisin asiakkaalle ja sulkee
@@ -269,6 +276,22 @@ let writen = match socket.write(&buf[..readn]) {
     }
 };
 ```
+
+Jos `write()`-kutsun palauttamaa tavumäärää ei tarvita, tai käytetään
+esimerkiksi `write_all()`-kutsua, mutta halutaan silti tarkistaa, onnistuiko
+toiminto vai palauttiko se virheen, onnistuu se esimerkiksi seuraavasti:
+
+```rust
+if let Err(error) = socket.write_all(&buf[..readn]) {
+    println!("Failed to write to {}: {}", address, error);
+    continue;
+}
+```
+
+Jos `write_all()`-kutsun palauttama **Result**-arvo on **Err**-tyyppinen, `if
+let` -ehto toteutuu ja haaran koodi suoritetaan. Tällöin **Err**-vaihtoehdon
+sisältämä virhearvo sidotaan `error`-muuttujaan. Jos kutsu onnistui, ehto ei
+toteudu ja suoritusta jatketaan haaran jälkeisestä koodista.
 
 ## I/O-kanavien multipleksointi ja blokkaamattomat pistokkeet
 
