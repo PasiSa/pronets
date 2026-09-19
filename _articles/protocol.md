@@ -422,7 +422,8 @@ Likely protocol actions needed:
   the map for a possible reconnection.
 
 - End simulation.
-  Ehdotus reaaliaikaisesta toiminnosta (joka toteutetaan UDP:llä):
+
+Idea for a real-time element (using UDP):
 
 - Position updates can be done using UDP
 
