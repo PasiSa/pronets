@@ -523,7 +523,7 @@ pitäisi toimia eri järjestelmissä (Windows, Mac, Linux).
   Verkossa julkaistu kirja "[Game development in Rust with
   Macroquad](https://mq.agical.se/)", on hyödyllinen esittely Macroquadin eri
   ominaisuuksista. Esimerkkikansiossamme on myös yksinkertainen
-  [Macroquad-esimerkki]() jossa esitellään objektin pyöritystä ja liikuttamista
+  [Macroquad-esimerkki](https://github.com/PasiSa/pronets/tree/main/examples/macroquad/src/main.rs) jossa esitellään objektin pyöritystä ja liikuttamista
   näppäinkomentojen pohjalta.
 
 - **[Bevy](https://crates.io/crates/bevy)** ([verkkosivu](https://bevy.org/)) on
