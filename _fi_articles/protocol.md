@@ -520,6 +520,12 @@ pitäisi toimia eri järjestelmissä (Windows, Mac, Linux).
   välttämättä sovellu yhtä hyvin. Macroquad-sovellukset voivat toimia natiivisti
   työpöydällä sekä verkkoselaimissa WebAssemblyn avulla.
 
+  Verkossa julkaistu kirja "[Game development in Rust with
+  Macroquad](https://mq.agical.se/)", on hyödyllinen esittely Macroquadin eri
+  ominaisuuksista. Esimerkkikansiossamme on myös yksinkertainen
+  [Macroquad-esimerkki]() jossa esitellään objektin pyöritystä ja liikuttamista
+  näppäinkomentojen pohjalta.
+
 - **[Bevy](https://crates.io/crates/bevy)** ([verkkosivu](https://bevy.org/)) on
   pelimoottori kaksi- ja kolmiulotteisten pelien sekä vuorovaikutteisten
   sovellusten rakentamiseen. Sen arkkitehtuuri perustuu Entity Component System

@@ -491,6 +491,12 @@ are some crates you may use. All of them should work in different systems
   for whiteboard. Macroquad applications can run natively on desktop as well as
   in web browsers through WebAssembly.
 
+  Online book "[Game development in Rust with Macroquad](https://mq.agical.se/)"
+  is useful tutorial into various Macroquad features. Our examples directory has
+  also a simple [Macroquad
+  example](https://github.com/PasiSa/pronets/tree/main/examples/macroquad/src/main.rs)
+  that demonstrates rotating and moving an object based on keyboard commands.
+
 - **[Bevy](https://crates.io/crates/bevy)** ([web page](https://bevy.org/)) is a
   game engine written for building 2D and 3D games and interactive applications.
   Its architecture is based on an Entity Component System (ECS), where game
