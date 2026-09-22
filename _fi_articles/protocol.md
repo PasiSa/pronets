@@ -625,3 +625,94 @@ Vastaa aiempaan tapaan lyhyesti myös seuraaviin kysymyksiin:
   tekoälyavustimia, kerro miten käytit niitä ja olivatko ne hyödyllisiä.
 
 </div>
+
+## Rust-vinkkejä
+
+Alla on pari Rust-koodiesimerkkiä, joista voi olla hyötyä tehtävässä. Ne
+eivät sellaisenaan sisä kokonaista käännettävää ohjelmaa, mutta voivat auttaa
+oman toteutuksen tekemisessä.
+
+### Viestin lähettäminen kaikille asiakkaille
+
+I/O-multipleksausta havainnollistavassa
+**[iterative-server](https://github.com/PasiSa/pronets/tree/main/examples/iterative-server/src/main.rs)**
+-esimerkissä jokaisella asiakkaalla on tietorakenne, johon tallennetaan
+asiakaskohtaisia tietoja, kuten viestintään käytettävä pistoke. Palvelimeen
+yhdistetyt asiakkaat tallennetaan HashMap-kokoelmaan.
+
+HashMap-kokoelman arvot voidaan käydä läpi esimerkiksi `values_mut()`-
+funktiolla. Se palauttaa muokattavan iteraattorin, eli muokattavan viitteen
+yhteen asiakkaaseen kerrallaan. Koska arvo on muokattavissa, tietorakenteen
+sisältöä voi muuttaa. Koska kyseessä on viite, omistajuus säilyy
+HashMap-kokoelmalla.
+
+Tässä on esimerkki koodista, joka voisi olla poll-silmukan sisällä. Koodin voisi
+jäsentää esimerkiksi erilliseksi funktioksi, joka lähettää viestin kaikille
+parhaillaan yhdistetyille asiakkaille.
+
+```rust
+for client in clients.values_mut() {
+    if let Err(e) = client.socket.write_all(&buf) {
+        println!("Error writing to client: {}", e);
+
+        // HashMap-kokoelman asiakastietueessa voisi olla totuusarvoinen
+        // "active"-kenttä, joka kertoo, mitkä asiakkaat ovat vielä toiminnassa.
+        // Toimimattomat asiakkaat voisi poistaa esimerkiksi
+        // poll-käsittelysilmukan lopussa.
+        client.active = false;
+    }
+}
+```
+
+### Eri viestityyppien käsittely match-lausekkeella
+
+Kun viestityyppejä alkaa olla useita, match-lauseke on kätevä tapa käsitellä
+niitä. Alla on esimerkki siitä, miten tämän voisi toteuttaa. Jokaiselle
+viestityypille voisi olla oma funktionsa, joka käsittelee kyseisen tyyppisen
+viestin.
+
+Käsittelyfunktiot palauttavat Result-tyyppisen arvon, jonka mahdollinen virhe
+tarkistetaan kaikille käsittelyfunktioille yhteisessä kohdassa. Vaikka `?`-
+operaattorin käyttäminen esimerkiksi `main()`-funktiossa on huono ajatus,
+käsittelyfunktioiden sisällä siitä voi olla hyötyä, jos tiedämme, että virhe
+käsitellään pian funktion paluun jälkeen.
+
+Esimerkki muistuttaa myös siitä, että pituuskenttä tulee tarkistaa: pituuden on
+katettava pakolliset otsakkeet, ja sillä tulee olla jokin yläraja, jotta et
+vahingossa yritä varata hyvin suurta muistialuetta (huonolla lopputuloksella).
+
+```rust
+// Viestin pituus ja tunniste on luettu aiemmin.
+let mut msg_type_bytes = [0_u8; 4];
+// TODO: Lue viesti tässä yllä olevaan taulukkoon.
+
+// Muunna tavut merkkijonoksi.
+let msg_str = String::from_utf8_lossy(&msg_type_bytes);
+
+// Oletamme, että socket- ja length-muuttujat on asetettu aiemmin.
+let result = match msg_str.as_ref() {
+    "TST " => process_tst(&mut socket, length),
+    "MSG " => process_msg(&mut socket, length),
+    // Muut viestityypit...
+    _ => {
+        // Käsittele tuntematon viesti.
+    }
+};
+if let Err(e) = result {
+    // Virheenkäsittely
+}
+
+fn process_tst(socket: &mut TcpStream, length: u32) -> std::io::Result<()> {
+    if length < 12 || length - 12 > 4096 {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "Invalid or unsupported message length",
+        ));
+    }
+    let mut buf = [0_u8; 4096];
+    let n = (length - 12) as usize; // Vähennä yhteisen otsakkeen pituus.
+    socket.read_exact(&mut buf[..n])?;
+    // ...funktio jatkuu...
+    Ok(())
+}
+```

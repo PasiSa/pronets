@@ -591,3 +591,93 @@ As before, shortly answer also the following questions:
   used AI assistants, tell how did you use them and if they were helpful.
 
 </div>
+
+## Rust hints
+
+Below are a couple of Rust code samples that may be useful for the assignment.
+They are not complete and fully functionally, but possibly useful when working
+on your implementation.
+
+### Broadcasting message to all clients
+
+The
+**[iterative-server](https://github.com/PasiSa/pronets/tree/main/examples/iterative-server/src/main.rs)**
+example demonstrating I/O Multiplexing has a structure for each client that
+stores client-specific information such as the socket used for communication,
+and currently connected clients are stored in HashMap collection.
+
+You can iterate through all values in the HashMap for example by using the
+`values_mut()` function. It returns a mutable iterator, i.e. mutable reference
+to one client at a time. Because the value is mutable, the contents of the
+structure can be modified, and because it is a reference, the ownership stays in
+the HashMap.
+
+Here is an example of code that could be inside the poll loop. A nice
+organization of the code could be a separate function that broadcasts a message
+to all currently connected clients.
+
+```rust
+for client in clients.values_mut() {
+    if let Err(e) = client.socket.write_all(&buf) {
+        println!("Error writing to client: {}", e);
+
+        // We could have a boolean "active" flag in our hashmap to indicate which
+        // clients are still operational, and then at some point, e.g. at the
+        // end of the poll processing loop clean up inactive clients
+        client.active = false;
+    }
+}
+```
+
+### Using match to parse different message types
+
+Now that we start to have multiple different message types, the match statement
+is a nice way of handling different message type. Below is an example of how it
+could be done. For each message type, there could be a separate function to
+process the particular kind of message.
+
+The processing functions return a Result type, that is checked for errors, in a
+common place for all processing functions. Even though using the `?` operator is
+a bad idea to be used, e.g., in the `main()` function, here inside the
+processing functions it could be helpful, if we know that the error will be
+processed soon after the function returns.
+
+The example also works to remind that the length field should be validated so
+that it covers the mandatory headers, and has some upper bound so that you don't
+accidentally try to allocate a very large chunk of memory (and likely fail).
+
+```rust
+// message length and ID have been read earlier
+let mut msg_type_bytes = [0_u8; 4];
+// TODO: Read message here to above array
+
+// Convert the bytes to string
+let msg_str = String::from_utf8_lossy(&msg_type_bytes);
+
+// We assume the socket and length variables are set somewhere earlier.
+let result = match msg_str.as_ref() {
+    "TST " => process_tst(&mut socket, length),
+    "MSG " => process_msg(&mut socket, length),
+    // other message types....
+    _ => {
+        // handle unknown message
+    }
+};
+if let Err(e) = result {
+    // Error handling
+}
+
+fn process_tst(socket: &mut TcpStream, length: u32) -> std::io::Result<()> {
+    if length < 12 || length - 12 > 4096 {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "Invalid or unsupported message length",
+        ));
+    }
+    let mut buf = [0_u8; 4096];
+    let n = (length - 12) as usize; // subtract the common header
+    socket.read_exact(&mut buf[..n])?;
+    // ...function continues...
+    Ok(())
+}
+```
