@@ -66,6 +66,13 @@ The examples are as follows:
   but applies asynchronous operations using Rust's **[tokio
   crate](https://crates.io/crates/tokio)**.
 
+## Testing
+
+- **[integration-test](integration-test/)**:
+  A length-prefixed TCP echo service with an integration test that starts a
+  server thread, sends a message over localhost, and checks the response and
+  connection closure. Run with `cargo test`.
+
 ## TLS
 
 There are client and server examples for testing Transport Layer Security. They
