@@ -13,6 +13,8 @@
       url: /fi/server/
     - title: 4. Protokolla ja projekti
       url: /fi/protocol/
+    - title: 5. Testaus ja havainnoitavuus
+      url: /fi/testing/
 
 - title: Koodiesimerkit
   url: /examples/

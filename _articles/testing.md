@@ -1,5 +1,7 @@
 ---
 title: Testing and observability
+lang: en
+translation_key: testing
 ---
 
 This module looks into analysis of software in various ways. In small programs
@@ -56,9 +58,11 @@ as subdirectories under `src/`. Rust book [section
 7.5](https://doc.rust-lang.org/stable/book/ch07-05-separating-modules-into-different-files.html)
 talks about this in more detail.
 
-In addition, a good modular design could be to start the client module by
-specifying a `Client` structure, and implementing its operations as methods
-operating on the structure (as briefly discussed in Module 2), for example:
+In addition, when applicable, a good principle would be to encapsulate the data
+related to type or module inside a structure aligning with the module name, that
+is operated using methods. For example in case of the **client** module we could
+have a `Client` structure and its methods in the following way (as briefly
+discussed already in Module 2):
 
 ```rust
 /// Represents one client connection to the server.
@@ -82,15 +86,15 @@ impl Client {
 ```
 
 The structure and methods can then be accessed from other modules by including
-it in the beginning of the module (`crate::` prefix can be left out in
-`main.rs` that is at the root of the namespace):
+it in the beginning of the module with `use` instruction (`crate::` prefix can
+be left out in `main.rs` that is at the root of the namespace):
 
 ```rust
 use crate::client::Client;
 ```
 
-Note that the structure must be specified as **public** to be accessed from
-other modules, as do the methods.
+Note that the structure must be specified as **public** (`pub`) to be accessed
+from other modules, as do the methods.
 
 ## Testing
 
@@ -112,17 +116,17 @@ complete description about how to write tests.
 
 Common Git services such as Gitlab and Github provide support for automated
 workflows that can be run, e.g., for each push event or merge request (a way for
-developers to propose code changes to main branch). These can be used to
-implement **Continuous Integration (CI)**, i.e., automatically execute the tests
-and code format checking, for example as a precondition to accept the push
-event.
+developers to propose code changes for review to main branch in projects with
+multiple developers). These can be used to implement **Continuous Integration
+(CI)**, i.e., automatically execute the tests and code format checking, and
+require them to pass as a precondition to accept the push event.
 
 ### Assert macro
 
 Assertions check that a condition or result matches what we expect. If an
-assertion fails, it causes a panic that causes the test fail. The exclamation
-mark (`!`) indicates that these are macros. The most common forms of assertion
-are:
+assertion fails, it causes a panic (interruption of the program) that causes the
+test fail. The exclamation mark (`!`) indicates that these are Rust macros. The most
+common forms of assertion are:
 
 - `assert!(condition)`: checks that a boolean condition is true, for example
   `assert!(!encoded.is_empty())`.
@@ -200,11 +204,11 @@ that this example works like a library crate: it does not have the `main()`
 function or **main.rs**.
 
 There is one integration test in `tests/roundtrip.rs` that opens a server socket
-in a separate thread, and the connects the client socket to it, to test the
-`handle_connection` function, and the interaction between the two modules.
-Splitting the server and client implementations in separate threads is a fairly
-common design in integration tests, that involve testing parts of the network
-interaction.
+in a separate thread (that will be covered in the next module), and the connects
+the client socket to it, to test the `handle_connection` function, and the
+interaction between the two modules. Splitting the server and client
+implementations into separate threads is a fairly common design in integration
+tests, that involve testing parts of the network interaction.
 
 You can try the test in the example by running `cargo test`. Note that you
 cannot use `cargo run` because there is no `main()` function.
@@ -227,16 +231,18 @@ sends different message patterns with valid and invalid messages. The client
 verifies that the responses from server are as expected and reports the outcome
 on the command line.
 
-By default, a binary Rust crate runs the `main()` function from the **main.rs**
+By default, a binary Rust package runs the `main()` function from the **main.rs**
 source file under the `src` directory. It is possible to have alternative
 binaries in a `bin` subdirectory under the `src` directory, that have their own
 `main()` function. This way it is possible to have, for example, a test client
 to run automated test sequence, when the main interactive (and perhaps
 graphical) binary is in the primary **main.rs** of the **client** package.
 
-When there are multiple binaries, the name of the binary needs to be specified
-when executing it using `cargo`. If we had `bin/testclient.rs` in addition to
-main.rs in client package, the options could be either
+When there are multiple binaries in the same package, the name of the binary
+needs to be specified when executing it using `cargo`. The binary that is
+defined in **main.rs** has the same name as the package. If we had
+`bin/testclient.rs` in addition to main.rs in client package, the options could
+be either
 
     cargo run -p client --bin client
 
@@ -258,18 +264,20 @@ such as server startup, a client connecting, or a request failing.
 ### Logging levels
 
 During development we often want detailed information about program execution.
-When the program is in production, recording every step for every client creates
-too much output. Logging levels allow us to select the correct level of detail.
-In the following we will use the **tracing** crate, which provides the following
-macros for different logging severity levels, from highest to lowest severity:
+When the program is in production and there may be large amounts of
+communication traffic, recording every step for every client creates too much
+output. Logging levels allow us to select the correct level of detail. In the
+following we will use the **tracing** crate, which provides the following macros
+for different logging severity levels, from highest to lowest severity:
 
 - **ERROR**, `error!`: A failure that needs attention, such as the server being
   unable to bind its listening socket or access required storage.
 - **WARN**, `warn!`: An unexpected situation that the server can recover from,
   such as rejecting an invalid protocol message while continuing to serve
   other clients.
-- **INFO**, `info!`: Important normal events, such as server startup or shutdown.
-  Connection lifecycle events may also be useful at this level for our project.
+- **INFO**, `info!`: Important normal events, such as server startup or
+  shutdown. Connection lifecycle events, such accepting and ending a connection,
+  may also be useful to be logged at this level for our project.
 - **DEBUG**, `debug!`: Details useful during development, such as the type and ID
   of a message being processed.
 - **TRACE**, `trace!`: Fine-grained execution details, such as progress through
@@ -335,7 +343,7 @@ RUST_LOG=debug cargo run -p server
 
 You can set the environment variable for the Docker container by adding the
 following in the `Dockerfile`, before the CMD line that starts the server,
-choosing the logging level as you wish:
+choosing the logging level as needed:
 
 ```
 ENV RUST_LOG=info
@@ -343,11 +351,13 @@ ENV RUST_LOG=info
 
 **Note:** The course server has an additional optional attribute for setting
 environment variables with the `run-docker` POST request, if you want to
-temporarily adjust, e.g., the logging level for some debugging purposes. The
-attribute name to be added in JSON payload is `env`, and it takes an array of
-strings as parameter, for example: `["RUST_LOG=debug", "SECRET_VALUE=xyz"]`.
+temporarily adjust, e.g., the logging level for some debugging purposes without
+having to modify the `Dockerfile`. The attribute name to be added in JSON
+payload is `env`, and it takes an array of strings as parameter containing the
+environment variables to be defined, for example: `["RUST_LOG=debug",
+"SECRET_VALUE=xyz"]`.
 
-### Events and structured fields
+### Events
 
 An **event** records something that happened at a particular point in execution.
 Alongside a readable message, it can contain named **fields**. For example, this
@@ -365,11 +375,11 @@ fn record_message(connection_id: u64, message_id: u32, message_type: &str) {
 ```
 
 Even though the macros can be used like `println!` or `format!` for formatting
-different parameters given to the calls, the **tracing** output methods allow
-including selected variables in the output, shown as `name_of_variable = value`,
-as shown above for `connection_id`, `message_id` and `message_type`. This
-example assume that each accepted connection is assigned a numberic identifier
-for logging purposes.
+different parameters given to the calls, the **tracing** library output methods
+allow including selected variables in the output, shown as
+`name_of_variable=value`, as shown above for `connection_id`, `message_id` and
+`message_type`. This example assume that each accepted connection is assigned a
+numeric identifier for logging purposes.
 
 Note that you can skip the `tracing::` prefix from different log calls by adding
 the following in the beginning of the file:
@@ -387,7 +397,8 @@ When several clients communicate with a server, their events are interleaved.
 **Structured tracing** adds context using **spans**: named operations with a
 beginning and an end. A connection span can contain the events for that
 connection, with a nested span for each request. Fields on the span identify the
-operation without requiring every logging event to repeat them.
+operation, and they are included in the events inside the span, so every logging
+event does not need to repeat them.
 
 The `#[tracing::instrument]` attribute creates a span around a function. For
 example, a connection handler might call this function once for each decoded
@@ -408,8 +419,9 @@ fn process_message(message_id: u32, message_type: &str, payload: &[u8]) {
 ```
 
 By default, the attribute records all function arguments as fields.
-`skip(payload)` excludes the message body, while `payload_bytes` records its
-size. The other arguments identify the message. The [instrument attribute
+`skip(payload)` excludes the message body from the log, while `payload_bytes`
+records its size. The function arguments that identify the message are included
+in the span events. The [instrument
 documentation](https://docs.rs/tracing/latest/tracing/attr.instrument.html)
 describes additional options.
 
@@ -417,14 +429,17 @@ describes additional options.
 
 Here are some guidelines to consider for logging:
 
-- Use consistent field names in different log messages.
+- Use consistent field names in different log messages, to make it easier to
+  analyze events in relation to one another.
 - Record enough context to understand a failure, including the operation that
-  failed and the error value. Log the error at the point where it is handled with
-  that context, rather than repeatedly at every function through which it passes.
-- **Important:** Do not record passwords, authentication tokens, or other
-  private information (such as message content). Remember that automatically
-  recorded function arguments may also contain such values; use `skip(...)` or
-  `skip_all` where appropriate. Remember that the logs are visible on our course
+  failed and the error code or description. Log the error at the point where it
+  is handled with that context, rather than repeatedly at every function through
+  which it passes.
+- **Important:** Do not record passwords, authentication tokens (discussed
+  later), or other private information (such as message content). Remember that
+  automatically recorded function arguments in spans may also contain such
+  values. Use `skip(...)` in span instrumentation where appropriate. It is
+  especially good to remember that the container logs are visible on our course
   server to everyone.
 
 ## Metrics
@@ -436,11 +451,12 @@ summarize what is happening in the application. For example, they can tell us
 how many clients are connected, how many messages the server processes over
 given period of time, and how often processing fails.
 
-Collecting these measurements over time helps us see changes in server behavior.
-A growing number of active connections together with increasing response times
-may indicate that the server is approaching its capacity. Metrics help to
-identify when a problem occurs, while logs and traces help investigate the
-individual events behind it.
+Collecting measurements over time helps us see changes in server behavior. For
+example, a growing number of active connections together with increasing
+response times may indicate that the server is approaching its capacity, and
+something would need to be done for scaling it up. Metrics help to identify when
+a problem occurs, while logs and traces help investigate the individual events
+behind it.
 
 ### Different kinds of metrics
 
@@ -450,6 +466,12 @@ There are different kinds of metrics that can be measured at a server:
   (usually when server was started). For example, typically a server might
   count the total number of accepted connections, number of received messages,
   or number of errors in processing.
+
+  When server runs for a longer time, a constantly increasing counter may lose
+  its usefulness. Therefore it may be useful to split counters into periods of
+  certain length, so that the changes in trends are easier to see, for example
+  on a hourly or daily basis. Such values could then be reported as series (e.g.
+  as a Rust vector), instead of single values.
 
 - **Gauge** measures the current state of the system. This could be, for example
   number of currently active connections, or number of unprocessed messages
@@ -483,79 +505,48 @@ let started = std::time::Instant::now();
 let processing_seconds = started.elapsed().as_secs_f64();
 ```
 
-### Measuring server behavior
-
-_TODO: edit this_
-
-A counter value alone does not tell us how busy the server is now. To calculate
-**throughput**, we compare two readings over a known time interval. If the
-received message counter increases from 1200 to 1500 in 10 seconds, the average
-throughput during that interval is `(1500 - 1200) / 10 = 30` messages per second.
-The calculation must account for counter resets, rather than interpret a server
-restart as negative throughput.
-
-An **error rate** can similarly describe error events per second. To calculate
-the fraction of requests that fail, divide the number of failed requests by the
-total number of requests in the same interval. A general error event counter
-cannot necessarily be used for this fraction: one request may generate several
-errors, and some errors may occur outside request handling.
-
-For **latency**, define the operation being timed. Measuring from the start of
-request handling to the completion of the response write gives a server-side
-processing duration. Measuring from sending a request to receiving its complete
-response at the client also includes network delays and other waiting. These
-measurements answer different questions. In Rust, `std::time::Instant` can be
-used to measure elapsed time without relying on wall-clock timestamps.
-
 ## Monitoring
 
-To support the analysis of a busy server, there are **monitoring** and
-visualization tools that use the metrics, logs, and traces described above to
+To support the analysis of a production server, there are **monitoring and
+visualization tools** that use the metrics, logs, and traces described above to
 follow the health and performance of a running server. Collecting observations
 continuously helps to recognize changes in load and detect problems that might
 not occur during testing. Below we shortly refer to **Prometheus** and
-**Grafana** which are not used on the assignments, but you are free to try them
-if you are interested and have spare time.
+**Grafana** which we are not covering on this course further, but you are free
+to try them if you are interested and have spare time.
 
-To make metrics available outside the application, the server needs to
-**export** them. For example,
+To make metrics available outside the application, the server needs to make them
+available through a public API. For example,
 [Prometheus](https://prometheus.io/docs/introduction/overview/) is a widely used
 tool that collects metrics from a specific HTTP endpoint, commonly `/metrics`,
 where the application exposes them in format understood by Prometheus.
 Prometheus stores the readings with timestamps, allowing us to examine their
-history and calculate rates such as messages processed per second.
+history and calculate rates such as messages processed over a specified period
+of time.
 
 A **dashboard** presents these measurements as graphs and current values.
 [Grafana](https://grafana.com/docs/grafana/latest/fundamentals/dashboards-overview/)
-is another commonly used tool that can query a data source such as Prometheus and
-display related measurements together. For our server, a useful dashboard could
-show active connections, message throughput, error rate, and request processing
-times. Comparing these graphs over the same time interval helps reveal how
-server load affects performance.
+is another commonly used tool that can query a data source such as Prometheus
+and display related measurements together. For a network server, a dashboard
+could show active connections, message throughput, error rate, and request
+processing times. Comparing these graphs over the same time interval helps
+reveal how server load affects performance.
 
 **Alerts** notify the server operator when a condition requires attention,
 without requiring someone to watch the dashboard continuously. For example, an
 alert could indicate that the server is unreachable or that the error rate has
-remained above a chosen threshold for several minutes. Requiring a condition to
-persist can prevent brief spikes from causing unnecessary notifications. Alerts
-should describe a problem that the operator can investigate or act on.
-
-Metrics help locate the time and extent of a problem; logs and traces provide
-the details needed to investigate it. If a dashboard shows an increase in
-processing times, examine logs from the same period and use connection or
-message IDs to follow affected operations. Together, these observations help to
-notice, for example, increased traffic from failures or delays in particular
-operations.
+remained above a chosen threshold over some amount of time. Alert should
+describe a problem that the operator can investigate or act on.
 
 <div class="assignment-frame" markdown="1">
 
-## Assignment
+## Assignment #5
 
 **Part 1**: If you haven't done so yet, add proper error handling to your
-implementation in places where execution can be expected to fail sometimes, in
-communication operations. User `error!` and `warn!` macros in appropriate places
-to log these events. Add also an `info!` event when a new connection is
-accepted.
+implementation in places where execution can be expected to fail sometimes,
+particularly in communication operations. User `error!` and `warn!` macros in
+appropriate places to log these events. Add also an `info!` event when a new
+connection is accepted.
 
 **Part 2**: Implement at least one unit test for a selected functionality in your
 implementation. If you haven't done so yet, rearrange some suitable
@@ -564,7 +555,7 @@ function that can be tested. Describe in your report shortly what functionality
 you tested, and what kind of cases were asserted.
 
 **Part 3**: To implement end-to-end tests, write a test client that connects
-server, and tests TST ping, user registration using USR, and message sending
+server, and tests TST message, user registration using USR, and message sending
 using MSG, with different valid and perhaps invalid sequences. Try also sending
 an unknown message type. Test that your own server survives the test, and if
 not, do the necessary fixes. Then test **two other servers** listed on the
@@ -574,7 +565,10 @@ report describe your test cases, and what were your findings in the tests.
 To make testing different servers easier, it is good to use command line
 arguments to specify address and port to connect. You can place the test client
 as a separate binary under `bin` directory, for example naming it as
-"_testclient.rs_".
+"_testclient.rs_". See examples about how to use command line arguments, and for
+example the [project template
+client](https://github.com/PasiSa/pronets/blob/main/examples/project-template/client/src/main.rs)
+shows how to use the **clap** crate parser.
 
 **Part 4**: Collect metrics at least for number of opened connections, number of
 received messages and number of error events. Implement **MET** message that
@@ -592,11 +586,13 @@ into JSON format). At least following metrics should be included:
 You can also have more metrics in addition to these if you want.
 
 Finally, if you have updated your protocols plans and implementation, update
-`doc/features.md` as needed. After you have done and tested the above parts,
+`doc/design.md` as needed. After you have done and tested the above parts,
 commit and push your work to git normally, and update the server instance using
-the `/run-docker` endpoint. Use "**base-3**" as the protocol identifier, or if
-you have started implementing your project-specific protocol, use your own label
-(this implies that you also implement "**base-3**" specifications).
+the `/run-docker` endpoint (it might be useful to do intermediate
+commits also earlier, for example after each above part). Use "**base-3**" as
+the protocol identifier, or if you have started implementing your
+project-specific protocol, use your own label (this implies that you also
+implement "**base-3**" specifications).
 
 Include also the following information:
 
