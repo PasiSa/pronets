@@ -68,7 +68,7 @@ The examples are as follows:
 
 ## Testing
 
-- **[integration-test](integration-test/)**:
+- **[integration-test](https://github.com/PasiSa/pronets/tree/main/examples/integration-test/)**:
   A length-prefixed TCP echo service with an integration test that starts a
   server thread, sends a message over localhost, and checks the response and
   connection closure. Run with `cargo test`.
