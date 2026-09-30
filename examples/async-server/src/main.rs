@@ -44,9 +44,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         println!("Accepting connection from {}", address.to_string());
 
         // Spawn a new tokio task to handle communication with the client.
-        task::spawn(async move {
-            process_client(socket, address).await;
-        });
+        task::spawn(process_client(socket, address));
     }
 }
 
@@ -61,7 +59,7 @@ async fn process_client(mut socket: TcpStream, address: SocketAddr) {
                 // the other end.
                 if n == 0 {
                     println!("Client {} closed connection", address.to_string());
-                    break;  // exit the function and terminate the thread
+                    break;  // exit the function and terminate the task
                 }
                 println!("read {} bytes from client {}", n, address.to_string());
 
