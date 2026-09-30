@@ -15,6 +15,8 @@
       url: /protocol/
     - title: 5. Testing and observability
       url: /testing/
+    - title: 6. Concurrency
+      url: /concurrency/
 
 - title: Code Examples
   url: /examples/
