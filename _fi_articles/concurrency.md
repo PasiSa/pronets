@@ -580,7 +580,7 @@ miksi.
 valittuun palvelimeen vähintään viisi samanaikaista yhteyttä toteuttamiesi
 käyttötapausten testaamiseksi. Toteuta tämä luomalla jokaiselle yhteydelle oma
 säie. Mittaa ja tulosta myös kunkin säikeen suoritukseen kuluva aika alusta
-loppuun esimerkiksi [edellisessä moduulissa](../testing/#different-kinds-of-metrics)
+loppuun esimerkiksi [edellisessä moduulissa](../testing/#erilaisia-metriikoita)
 esiteltyjen ajanmittausfunktioiden avulla. Testaa päivitettyä testiasiakasta
 kahta [kurssipalvelimella](https://pronets1.dice.aalto.fi/) lueteltua palvelinta
 vastaan. Raportoi havaintosi.
