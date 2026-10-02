@@ -1,6 +1,44 @@
 ---
 title: Concurrency and asynchronous programming
+lang: en
+translation_key: concurrency
 ---
+
+This section dives into concurrent processing using **threads**. At server end,
+multiple threads allow better parallelism in modern computer system, as the
+operating system can schedule the different threads to be executed in parallel
+on different CPU cores. At client threads can be used to implement network
+communication without interrupting real-time user interaction on a graphical
+user interface.
+
+To support parallel execution under Rust's ownership rules, **shared reference
+counted pointers** are introduced, along with **Mutexes**, that protect the data
+integrity from parallel access.
+
+Finally, we look into **asynchronous programming** with **Tokio**, where the concurrent
+operations, e.g. with multiple clients, are distributed into lightweight tasks
+that are operated and scheduled by the user-level Tokio runtime, instead of
+operating system - scheduled threads.
+
+<div class="objectives-frame" markdown="1">
+
+**Objectives for this module:**
+
+- You will **understand the concept of smart pointers** for dynamic data types or
+  shared ownership, and know **how to apply them** in Rust.
+
+- You will know how to **use threads to manage concurrent application logic**
+  such that the operation of server and client progresses smoothly and
+  efficiently.
+
+- You will **understand how Mutexes work and how to use them together with smart
+  pointers** to guard access to shared data when there are concurrent threads
+  operating on data.
+
+- You will learn to **apply asynchronous programming model**, particularly with the
+  Tokio library as the asynchronous runtime.
+
+</div>
 
 ## Smart pointers for memory management
 
@@ -17,32 +55,36 @@ pointer mechanisms manage its lifetime.
 
 ### Allocating data from heap
 
-The simplest form of heap allocation is to use the `Box<T>` type, that places
-its actual data type into heap. The local variable in stack effectively is then
-just a reference to the memory in heap. The memory is released normally when the
-Box type goes out of scope. The below simple example of how Box is assigned and
-used, is copied from the [Rust book section
+Perhaps the most straight forward way of heap allocation is to use the `Box<T>`
+type, that places its content into heap. The memory is released normally when
+the Box type goes out of scope. The below simple example of how Box is assigned
+and used, is copied from the [Rust book section
 15.1](https://doc.rust-lang.org/stable/book/ch15-01-box.html) that discusses Box
 in more detail.
 
 ```rust
 fn main() {
-    let b = Box::new(5);
+    let b = Box::new(5);  // type: i32
     println!("b = {b}");
 }
 ```
 
-The Box type is particularly helpful when we don't know the exact size of the
-allocated data at compile time. Box can be used to implement
-object-oriented-like polymorphism in Rust with the help of **Traits** that
-specify common interface that different data types can implement. Until now, we
-have used, for example the `TcpStream` type, that implements both `Read` and
-`Write` traits, that also some other stream-like types could implement.
+![integer stored to heap using Box](/images/concurrency-boxbasic.svg){: width="90%" .center-img }
 
-For example, if we were implementing a whiteboard application, there could be
-trait `WhiteboardObject` that specifies `draw()` method. Then we could have
-types `Text`, `Rectangle`, and `Line` that implement the trait and the `draw()`
-method, and a vector container that stores boxed `WhiteboardObject` elements:
+The Box type is helpful when we don't know the exact size of the allocated data
+at the compile time. Box can be used to implement object-oriented-like
+polymorphism in Rust with the help of **Traits** that specify common interface
+that different data types can implement. For example the `TcpStream` type
+implements `Read` and `Write` traits that define common operations for reading
+from and writing to a stream interface, that also some other stream-like types
+could implement.
+
+If we were implementing a whiteboard application, there could be trait
+`WhiteboardObject` that specifies `draw()` method. Then we could have types
+`Text`, `Rectangle`, and `Line` that implement the trait and the `draw()`
+method. Using the `Box` type we can define a datatype for a variable to be
+dynamic, based on a given trait. For example, below we have a vector that can
+store any of the boxed `WhiteboardObject` elements:
 
 ```rust
 trait WhiteboardObject {
@@ -96,10 +138,10 @@ Object-oriented programming features in more detail.
 In some cases Rust's ownership rules may be limiting, and the ownership needs to
 be shared between multiple users. In particular, this is often needed in
 asynchronous programming, or when working with concurrency and threads where
-access to data is not straightforward and deterministic. If we are sharing data
-in a multithreaded program, how can we know when its memory can be released?
-Even if one thread is at the end of execution scope and would be ready to
-release the data, there may be other threads still needing it.
+timing of events and access to common data is not always deterministic. If we
+are sharing data in a multithreaded program, how can we know when its memory can
+be released? Even if one thread is at the end of execution scope and would be
+ready to release the data, there may be other threads still needing it.
 
 The `Rc<T>` type stores its data in heap, but differing to `Box`, the heap
 reference can be shared between multiple owners. Access to the data can be
@@ -134,10 +176,12 @@ fn main() {
 not copy the string itself. The original `message` remains usable after
 `shared_message` goes out of scope.
 
+![Shared string](/images/concurrency-rc.svg){: width="100%" .center-img }
+
 You can find more information about the `Rc` type in [section 15.4 of the Rust
 book](https://doc.rust-lang.org/stable/book/ch15-04-rc.html).
 
-### Reference counting for multiple threads: Arc
+### Atomic reference counting: Arc
 
 The `Rc` type is not safe against concurrent access, so it is only usable in
 single-threaded use cases. When ownership needs to be shared across multiple
@@ -152,8 +196,9 @@ Modern operating systems organize the different applications and services as
 resources as arranged by the operating system, and are executed in parallel as
 scheduled by the operating system. Because of the strong isolation arranged by
 the operating system, programs can be designed and implemented safely without
-interfering each other, unless some form of inter-process communication is used
-(such as sockets).
+interfering each other (at least as long as there are resources available in the
+system), unless some form of inter-process communication is used (such as
+sockets).
 
 Within the process the execution can be distributed into separate execution
 units, **threads**. Threads within the same process share the same resources,
@@ -166,11 +211,11 @@ local variables and execution context.
 
 Threads are one way of achieving timely access at a network server that needs to
 process multiple clients at the same time without delays. If a separate thread
-is assigned for serving each client, blocking socket I/O operations (e.g.,
+was assigned for serving each client, blocking socket I/O operations (e.g.,
 `read()`) only block the current thread without affecting others. In some cases
 the server implementation logic becomes simpler compared to the iteration loop
-of poll-based server with Multiplexed I/O -- until we need to share data between
-the threads.
+of poll-based server with Multiplexed I/O -- at least until we need to share
+data between the threads.
 
 The following server starts a separate thread for every accepted connection. The
 main thread can therefore continue waiting for new clients even while the
@@ -178,15 +223,15 @@ existing sockets are blocked waiting for data.
 
 A new thread is started using the `spawn()` function. Its parameter is unusual
 to what we have seen before. The parameter is another function that is run
-inside the thread. Instead of named function, a common practice, as done here,
-is to use **closure**, an unnamed function specified inline with the `spawn()`
-call. A closure can capture variables from its surrounding scope, like here we
-are doing for the `stream` variable that contains the just-accepted client
-socket. In the context of threads, `move` keyword is used here. It tells that
-the ownership of captured variables (i.e., `stream`) moves inside the closure,
-and this case inside the thread. The main thread cannot use it any more, and
-when spawned thread completes, the stream is released. Closures are explained
-more throughly in [Section 13.1 of the Rust
+inside the new thread. Instead of named function, a common practice, as done
+here, is to use **closure**, an unnamed function specified inline with the
+`spawn()` call. A closure can capture variables from its surrounding scope, like
+here we are doing for the `stream` variable that contains the just-accepted
+client socket. In the context of threads, `move` keyword is used here. It tells
+that the ownership of captured variables (i.e., `stream`) moves inside the
+closure, and this case inside the thread. The main thread cannot use it any
+more, and when spawned thread completes, the stream is released. Closures are
+explained more throughly in [Section 13.1 of the Rust
 book](https://doc.rust-lang.org/stable/book/ch13-01-closures.html).
 
 ```rust
@@ -237,8 +282,9 @@ fn main() -> io::Result<()> {
 [Chapter 16 of the Rust
 book](https://doc.rust-lang.org/stable/book/ch16-00-concurrency.html) discusses
 concurrency and threads in more detail, with additional examples. The examples
-folder has also an example of **[threaded
-server](https://github.com/PasiSa/pronets/blob/main/examples/threaded-server/src/main.rs)**.
+folder has also example code
+**[threaded-server](https://github.com/PasiSa/pronets/blob/main/examples/threaded-server/src/main.rs)**
+that demonstrates separate thread per incoming client.
 
 Because operating system schedules the threads, and they may be run concurrently
 by multiple CPUs, the mutual order of events between threads is undeterministic.
@@ -249,7 +295,7 @@ potentially large number of threads are operating on them. Rust aims to protect
 data against concurrent access, and has a few tools managing this, as discussed
 next.
 
-## Mutexes for concurrent access
+## Mutexes for concurrent data access
 
 As discussed above, ownership of data can be shared using reference counted
 heap-allocated variables. The data continues to exist in heap as long as there
@@ -328,7 +374,7 @@ hold a lock while waiting for an event that another thread can produce only
 after acquiring the same lock. Neither thread can proceed, so both wait
 indefinitely. To reduce this risk, one should keep critical sections short and
 avoid blocking operations while holding a lock. When multiple locks are needed,
-acquire them in a consistent order across threads.
+the program should acquire them in a consistent order across threads.
 
 ## Message channels for communicating between threads
 
@@ -367,6 +413,7 @@ use std::time::Duration;
 fn main() {
     let (sender, receiver) = mpsc::channel();
 
+    // moving the sending end of channel to the new thread
     let communication = thread::spawn(move || {
         for status in ["Connected", "New message", "Server disconnected"] {
             // Simulate a blocking socket read in the communication thread.
@@ -417,16 +464,16 @@ Asynchronous programming in Rust is based on futures: values implementing the
 example, when an operation needs to wait for data to arrive over a network.
 Calling a function declared with `async`, or evaluating an `async` block,
 creates a future. Its body does not execute until the future is polled, meaning
-that it is asked to make progress and checked for completion. An asynchronous
-runtime is responsible for this polling process.
+that it is asked to make progress. An asynchronous runtime is responsible for
+this polling process.
 
-Inside an `async` function or block, `.await` waits for a future to complete
-and produces its output value. If the future is not ready, the current task
-can pause, allowing the runtime to run other tasks on the same thread. If the
-future is ready immediately, no pause is needed. Operations such as asynchronous
-socket reads and asynchronous mutex locking use this mechanism to wait without
-blocking the thread. Adding `.await` does not turn an ordinary blocking operation
-into an asynchronous one; the operation must provide an asynchronous interface.
+Inside an `async` function or block, `.await` waits for a future to complete and
+produces its output value. If the future is not ready, the current task can
+pause, allowing the runtime to run other tasks on the same thread. If the future
+is ready immediately, no pause is needed. Operations such as asynchronous socket
+reads and asynchronous mutex locking use this mechanism to wait without blocking
+the thread. Adding `.await` does not turn an ordinary blocking operation into an
+asynchronous one, but the operation must provide an asynchronous interface.
 
 The Rust book [Section
 17.1.](https://doc.rust-lang.org/stable/book/ch17-01-futures-and-syntax.html)
@@ -453,9 +500,9 @@ monitors the status of I/O operations and timers, to resume tasks when progress
 is possible.
 
 A good **[tutorial of Tokio](https://tokio.rs/tokio/tutorial)** is given on the
-official web site. From the tutorial it is good highlight what actually happens
-when the `main()` function is wrapped with `#[tokio::main]` attribute, to show
-how its magic works. The following _main_ implementation:
+official web site. Borrowing the tutorial, it is good to point out what actually
+happens when the `main()` function is wrapped with `#[tokio::main]` attribute,
+to show how its magic works. The following _main_ implementation:
 
 ```rust
 #[tokio::main]
@@ -464,7 +511,7 @@ async fn main() {
 }
 ```
 
-gets transformed to (and could be replaced with) the following:
+gets transformed to the following by the compiler:
 
 ```rust
 fn main() {
@@ -483,8 +530,9 @@ tasks.
 
 When an operation such as `socket.read(&mut buf).await` cannot complete
 immediately, the client task pauses and Tokio can run other tasks. When the
-socket becomes ready, Tokio schedules the task to continue. This allows many
-connections to share a small number of worker threads.
+socket becomes ready for reading, Tokio schedules the task to continue. This
+allows many connections to share a small (but sufficient in terms of optimal
+parallelism) number of worker threads.
 
 The interface for spawning a task looks very similar to spawning a thread:
 

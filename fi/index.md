@@ -34,7 +34,7 @@ Kurssimateriaali koostuu seuraavista osioista:
 1. [Palvelinohjelmointi ja Docker-kontit](server/)
 1. [Protokollasuunnittelu ja projekti](protocol/)
 1. [Testaus ja havainnoitavuus](testing/)
-1. Rinnakkaisuus ja asynkroninen ohjelmointi
+1. [Rinnakkaisuus ja asynkroninen ohjelmointi](concurrency/)
 1. Tietoturva
 1. UDP ja reaaliaikainen tiedonsiirto
 
