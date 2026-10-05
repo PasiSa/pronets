@@ -400,6 +400,8 @@ interaction. Then, a message channel can be used to pass the status updates from
 the socket to the main thread that does the needed adjustments in the user
 interface.
 
+![Connecting threads using channel](/images/concurrency-channel.svg){: width="90%" .center-img }
+
 The simplified example below simulates waiting for server updates using
 `sleep()`. In a real client, the communication thread would read from a socket.
 The main thread uses `try_recv()` to check for updates without blocking, so it
@@ -560,6 +562,80 @@ threads, and mutexes to guard against simultaneous access. Also for `Mutex`
 there is a Tokio-specific version `tokio::sync::Mutex` that supports `.await`
 with the `lock()` function to yield if lock is not available, then to be later
 scheduled by the Tokio runtime when the lock can be acquired.
+
+### Writing client/server tests using Tokio
+
+When the implementation uses Tokio for managing concurrency, it is good to use
+Tokio also in tests that involve client-server interaction. This allows nice way
+of creating e.g. integration tests.
+
+The [`#[tokio::test]`](https://docs.rs/tokio/latest/tokio/attr.test.html)
+attribute creates a Tokio runtime for an asynchronous test. This allows us to
+run a server in a separate task while the test itself acts as a client. For
+example, the following test checks that a TCP server echoes the client's data.
+The following could be an integration tests in imaginary program.
+
+```rust
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::{TcpListener, TcpStream};
+use tokio::time::{timeout, Duration};
+
+#[tokio::test]
+async fn server_echoes_client_data() {
+    timeout(Duration::from_secs(5), async {
+        // Bind before connecting; port 0 lets the OS choose an available port.
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+
+        let server = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let mut buffer = [0; 1024];
+            loop {
+                let count = socket.read(&mut buffer).await.unwrap();
+                if count == 0 {
+                    break; // The client has finished sending.
+                }
+                socket.write_all(&buffer[..count]).await.unwrap();
+            }
+        });
+
+        let mut client = TcpStream::connect(address).await.unwrap();
+        let message = b"Hello, Tokio!";
+        client.write_all(message).await.unwrap();
+        // Close only the sending side so we can still receive the echo.
+        client.shutdown().await.unwrap();
+
+        let mut response = Vec::new();
+        client.read_to_end(&mut response).await.unwrap();
+        server.await.unwrap();
+        assert_eq!(response, message);
+    })
+    .await
+    .expect("client/server test timed out");
+}
+```
+
+The `async move` block transfers ownership of the listener to the server task.
+Both tasks can progress on the default single-threaded test runtime because
+waiting for network I/O yields to Tokio. Note that in tests it is good to bind
+to port 0 at server, meaning that system chooses port, and then query for the
+chosen port, using the `local_addr()` method. If we'd choose a fixed port, in
+unlikely case someone might have reserved it, and test would fail for that
+reason, which is not the desired outcome.
+
+TCP is a byte stream, so one `read()` may receive only part of the message.
+The server therefore loops and echoes each received chunk using `write_all()`.
+
+This example uses a feature of TCP sockets we haven't discussed yet: connection
+can be "half-closed", i.e. one of its directions can be closed early using the
+`shutdown()` method, while other direction is still available. It is not a
+commonly used feature, but used in this test: after the client shuts down its
+sending side, the server reads EOF and exits, dropping its socket. The client's
+[`read_to_end()`](https://docs.rs/tokio/latest/tokio/io/trait.AsyncReadExt.html#method.read_to_end)
+collects the response until that socket closes. Awaiting the server's task
+handle also checks that it completed without panicking, and the final assertion
+verifies that the echoed bytes match the original message. The timeout makes the
+test fail if the exchange stops making progress.
 
 <div class="assignment-frame" markdown="1">
 

@@ -402,6 +402,8 @@ dataa, se ei haittaa pääsäiettä eikä sen reaaliaikaista vuorovaikutusta.
 Viestikanavan avulla voidaan välittää pistokkeesta saadut tilapäivitykset
 pääsäikeelle, joka tekee tarvittavat muutokset käyttöliittymään.
 
+![Säikeiden yhdistäminen kanavalla](/images/concurrency-channel.svg){: width="90%" .center-img }
+
 Alla oleva yksinkertaistettu esimerkki simuloi palvelimen päivitysten
 odottamista `sleep()`-kutsulla. Todellisessa asiakasohjelmassa viestintäsäie
 lukisi pistokkeesta. Pääsäie tarkistaa päivitykset `try_recv()`-kutsulla
@@ -563,6 +565,84 @@ tavoin `Arc`-tyyppiä ja mutexeja suojaamaan samanaikaiselta käytöltä. Myös
 `lock()`-funktio tukee `.await`-ilmausta. Jos lukkoa ei ole saatavilla, tehtävän
 suoritus voi keskeytyä, ja Tokion ajoympäristö jatkaa sitä myöhemmin, kun lukko
 on vapautunut.
+
+### Asiakas/palvelin - testien kirjoittaminen Tokiolla
+
+Kun toteutus käyttää Tokiota samanaikaisuuden hallintaan, Tokiota kannattaa
+käyttää myös testeissä, joissa asiakas ja palvelin viestivät keskenään. Näin
+voidaan toteuttaa kätevästi esimerkiksi integraatiotestejä.
+
+Attribuutti
+[`#[tokio::test]`](https://docs.rs/tokio/latest/tokio/attr.test.html) luo
+Tokio-ajoympäristön asynkronista testiä varten. Sen avulla palvelinta voidaan
+suorittaa erillisessä Tokio-tehtävässä samalla, kun itse testi toimii
+asiakkaana. Seuraava esimerkkitesti tarkistaa, että TCP-palvelin lähettää
+asiakkaan lähettämän datan takaisin sellaisenaan. Se voisi olla kuvitteellisen
+ohjelman integraatiotesti.
+
+```rust
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::{TcpListener, TcpStream};
+use tokio::time::{timeout, Duration};
+
+#[tokio::test]
+async fn server_echoes_client_data() {
+    timeout(Duration::from_secs(5), async {
+        // Sido pistoke ennen yhteyden muodostamista; portti 0 antaa käyttöjärjestelmän valita vapaan portin.
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+
+        let server = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let mut buffer = [0; 1024];
+            loop {
+                let count = socket.read(&mut buffer).await.unwrap();
+                if count == 0 {
+                    break; // Asiakas on lopettanut lähettämisen.
+                }
+                socket.write_all(&buffer[..count]).await.unwrap();
+            }
+        });
+
+        let mut client = TcpStream::connect(address).await.unwrap();
+        let message = b"Hello, Tokio!";
+        client.write_all(message).await.unwrap();
+        // Sulje vain lähetyssuunta, jotta kaiun vastaanottaminen on edelleen mahdollista.
+        client.shutdown().await.unwrap();
+
+        let mut response = Vec::new();
+        client.read_to_end(&mut response).await.unwrap();
+        server.await.unwrap();
+        assert_eq!(response, message);
+    })
+    .await
+    .expect("client/server test timed out");
+}
+```
+
+`async move` -lohko siirtää kuuntelevan pistokkeen omistajuuden palvelintehtävälle.
+Molemmat tehtävät voivat edetä testien oletusarvoisessa yksisäikeisessä
+ajoympäristössä, koska verkon I/O-operaatioiden odottaminen luovuttaa
+suoritusvuoron Tokiolle. Testeissä palvelin kannattaa sitoa porttiin 0, jolloin
+käyttöjärjestelmä valitsee portin. Valitun portin voi tämän jälkeen selvittää
+`local_addr()`-metodilla. Kiinteä portti saattaa olla jo jonkin muun ohjelman
+käytössä, jolloin testi epäonnistuisi syystä, jota sen ei ollut tarkoitus testata.
+
+TCP on tavuvirta, joten yksi `read()`-kutsu voi vastaanottaa vain osan viestistä.
+Siksi palvelin lukee dataa silmukassa ja lähettää jokaisen vastaanotetun osan
+takaisin `write_all()`-metodilla.
+
+Tässä esimerkissä käytetään TCP-pistokkeiden ominaisuutta, jota emme ole vielä
+käsitelleet: yhteys voidaan sulkea osittain eli sen toinen suunta voidaan sulkea
+`shutdown()`-metodilla samalla, kun toinen suunta jää käyttöön. Ominaisuutta ei
+käytetä kovin usein, mutta tässä testissä siitä on hyötyä. Kun asiakas sulkee
+lähetyssuuntansa, palvelin lukee tavuvirran loppumerkin (EOF), lopettaa
+suorituksensa ja vapauttaa pistokkeensa. Asiakkaan
+[`read_to_end()`](https://docs.rs/tokio/latest/tokio/io/trait.AsyncReadExt.html#method.read_to_end)
+kerää vastauksen, kunnes palvelimen pistoke sulkeutuu. Palvelintehtävän kahvan
+odottaminen tarkistaa myös, että tehtävä päättyi ilman paniikkia. Lopuksi
+assert-väittämä tarkistaa, että takaisin lähetetyt tavut vastaavat alkuperäistä
+viestiä. Aikaraja saa testin epäonnistumaan, jos viestinvaihto lakkaa etenemästä.
 
 <div class="assignment-frame" markdown="1">
 
