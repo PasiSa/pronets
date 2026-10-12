@@ -192,7 +192,7 @@ integration tests are placed in a separate `tests` directory under the top-level
 project directory, aside the `src` directory where the actual code is.
 
 Example
-**[intergration-test](https://github.com/PasiSa/pronets/tree/main/examples/integration-test/)**
+**[integration-test](https://github.com/PasiSa/pronets/tree/main/examples/integration-test/)**
 shows a simple server implementation split into two modules. The "**server**"
 module contains function `handle_connection` that receives (ownership of) a TCP
 connection, reads a message and writes its back, and then closes the connection
