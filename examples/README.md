@@ -85,7 +85,7 @@ tested together using the local certificates provided.
   in `cert` directory, or a public server (e.g. HTTPS to `www.aalto.fi`) by not
   giving the CA. See examples at the beginning of `main.rs`.
 
-- **[tls-server](https://github.com/PasiSa/pronets/tree/main/examples/tls-client/src/main.rs)**:
+- **[tls-server](https://github.com/PasiSa/pronets/tree/main/examples/tls-server/src/main.rs)**:
   Modified from the
   [async-server](https://github.com/PasiSa/pronets/tree/main/examples/async-server/src/main.rs)
   example based on Tokio, but now using TLS with **tokio-rustls** crate. The
