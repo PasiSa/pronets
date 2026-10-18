@@ -36,7 +36,7 @@ The course material contains the following sections:
 1. [Protocol design and project](protocol/)
 1. [Testing and observability](testing/)
 1. [Concurrency and asynchronous programming](concurrency/)
-1. Security
+1. [Security](security/)
 1. UDP and real-time transport
 
 **About the use of AI**: On this course there are no restrictions to using AI
