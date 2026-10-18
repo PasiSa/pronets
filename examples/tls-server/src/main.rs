@@ -33,6 +33,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // A certificate is public and identifies this server to connecting clients.
     // A PEM file may contain the server certificate followed by intermediate ones.
+    // BufReader is used to read the file efficiently as chunks to memory.
     let certificates = rustls_pemfile::certs(&mut BufReader::new(File::open(&args[2])?))
         .collect::<Result<Vec<_>, _>>()?;
 

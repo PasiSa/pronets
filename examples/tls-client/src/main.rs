@@ -59,11 +59,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         RootCertStore::from_iter(webpki_roots::TLS_SERVER_ROOTS.iter().cloned())
     };
 
+    // Crate a rustls client configuration. We are not authenticating client.
     let config = ClientConfig::builder()
         .with_root_certificates(roots)
         .with_no_client_auth();
 
     // Wrap the TCP socket in a rustls stream. Reads and writes now use TLS.
+    // We are using same Read and Write traits for both TCP and TLS,
+    // so we can use the same functions for both.
     let tcp = TcpStream::connect(&args[1])?;
     let tls = ClientConnection::new(Arc::new(config), server_name)?;
     let mut socket = StreamOwned::new(tls, tcp);
