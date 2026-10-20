@@ -648,6 +648,8 @@ Verkkopalvelimen tulisi antaa asiakkaalta vastaanotettu token
 asiakkaalla oikeus pyydettyyn toimintoon. Jos varmennus epäonnistuu, `decode`
 palauttaa virheen ja palvelimen on hylättävä pyyntö.
 
+<div class="assignment-frame" markdown="1">
+
 ## Tehtävä #7
 
 Olet saanut JWT-tokenin, jota sinun tulee tästä eteenpäin käyttää konttisi
@@ -737,3 +739,5 @@ Sisällytä raporttiin aiempaan tapaan myös seuraavat tiedot:
 - Mikä tehtävässä oli helppoa tai vaikeaa?
 - Mitä työkaluja tai muita tietolähteitä käytit? Jos käytit tekoälyavustajia,
   kerro erityisesti, miten käytit niitä ja oliko niistä hyötyä.
+
+</div>
