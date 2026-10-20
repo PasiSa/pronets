@@ -1,31 +1,33 @@
 ---
 title: Security
+lang: en
+translation_key: security
 ---
 
 The original design of the Internet protocols was based on insecure
 communication where the messages could be read by anyone having access to the
-communication path. Also today, by default the Internet traffic on top of the IP
-protocol is unencrypted and could be read with tools like Wireshark. Anyone
-along the connection path could therefore read and modify the messages, for
-example by hacking to a local WiFi access router which sometimes are insecurely
-designed, unless some countermeasures are made.
+communication path. Without additional security protocols, the Internet traffic
+on top of the IP protocol is unencrypted and could be read with tools like
+Wireshark. Anyone along the connection path could therefore read and modify the
+messages, for example from a local WiFi access router.
 
-Also the domain name system that is used, to map domain names into IP addresses
-is based on unencrypted communication. In addition it is heavily distributed and
-cached across multiple intermediaries in the network. IP addresses can also be
-spoofed, i.e. modified, by an intermediary. Therefore, in the basic insecure
-communication we cannot be sure if the server actually is who we believe it to
-be. We need to have solution that allows authenticating the server by a trusted
-third party.
+Also the domain name system that is used to map domain names into IP addresses
+is based on unencrypted communication, in addition being cached and replicated,
+which allows injecting wrong IP address information. IP address in packet
+headers can also be modified by an intermediate node on a communication path.
+Therefore, in a basic insecure communication session we cannot be sure if the
+server actually is who we believe it to be, and a solution that allows
+authenticating the server will be useful.
 
-Since the original design of the Internet, different solutions for security have
-been developed. One common solution is **IPsec [RFC
+Since the original deployment of the Internet, different solutions for security
+have been developed. One solution is **IPsec [RFC
 4301](https://datatracker.ietf.org/doc/html/rfc4301)**, that adds integrity
-protection and encryption to IP traffic. IPsec is often used in Virtual Private
-Networks for organization networks. IPsec typically requires operating system
-support, and requires therefore little effort to set up.
+protection and encryption directly on network layer to IP packets. IPsec is
+often used in Virtual Private Networks for organization networks. IPsec
+typically requires operating system support, and requires therefore little
+effort to set up.
 
-Another, probably currently the most popular solution that we are going to
+Another, currently the most popular solution that we are going to
 discuss in the following, is the **Transport Layer Security (TLS, [RFC
 9846](https://datatracker.ietf.org/doc/html/rfc9846))** protocol. It works on
 top of the transport layer, typically TCP, and is used, for example, practically
@@ -48,7 +50,7 @@ connection.
 - You are able to **work with TLS certificates** using OpenSSL tool, for example
   validating and checking the information in the certificate, and to create them.
 
-- You will be **able to use JSON Web Tokens** for authentication and authorization
+- You will be **able to use JSON Web Tokens** for authorizing messages.
 
 </div>
 
@@ -63,7 +65,7 @@ connection.
   done with clients.
 
 TLS could be seen as a separate layer on top of TCP and below the applications,
-and as such it fits well in the traditional layered protocol model. The below
+so it fits well in the traditional layered protocol model. The below
 illustration is taken from an online book "[High Performance Browser
 Networking](https://hpbn.co/transport-layer-security-tls/)".
 
@@ -77,25 +79,25 @@ authenticity of the server. Certificate is created and signed by a trusted
 connection is established. Certificate includes (among some other things) the
 following parts:
 
-- **server name** that is typically compared to the DNS name of the server.
-- **public key** of the server that can be used to decrypt the encrypted
-  messages.
+- **common name** that is typically compared to the DNS name of the connected
+  server.
+- **public key** of the server that is used to authenticate the server.
 - **validity period** during which the certificate can be used.
 - **issuer** name of the certificate authority that has created the certificate.
 - **digital signature** that the CA has created, and that can be verified using
   the public key of the CA.
 
-The client then verifies the certificate, for example that the server name
-matches the connected server, and that the certificate is still valid. The
-issuer should also be trusted by the client. There are generally trusted root
-certificate authorities configured to the local system. Root CAs may delegate CA
-responsibility to intermediate CAs that then create and provide the actual
-certificate to a server owner. In other words, there is a certificate chain that
-starts from the server certificate and and should terminate at one of the
-trusted root CAs.
+The client verifies the certificate that it receives from server during the TLS
+handshake, for example that the common name matches the connected server, and
+that the certificate is still valid. The issuer should also be trusted by the
+client. There are generally trusted **root certificate authorities** configured
+to the local system. Root CAs may delegate CA responsibility to intermediate CAs
+that then create and provide the actual certificate to the server operator,
+forming a certificate chain that starts from the server certificate and and
+should terminate at one of the trusted root CAs.
 
-For some internal uses, such as corporate intranets, or our little course server
-containers, getting an actual certificate from a trusted CA may not be
+For some internal uses, such as corporate intranets, or in our course server
+containers, getting an actual certificate from a trusted public CA may not be
 practical. It is typically possible, however, to configure custom local root CAs
 in such environments for easier certificate deployment, and this is what we also
 do on our course (more about the practicalities a bit later).
@@ -117,33 +119,32 @@ takes the following steps:
   communication continues using the session key.
 
 Using symmetric session key has some benefits: it is more efficient to use, and
-using a variable key for each session improves the security.
+using a unique key for each session improves the security.
 
 The above-described handshake is illustrated in the below graph, originally from
 Cloudflare's blog article "[What happens in a TLS
 handshake](https://www.cloudflare.com/learning/ssl/what-happens-in-a-tls-handshake/)".
 From the picture, one can see that even though TLS is commonplace these days for
 securing the network communication, its downside is that it increases the
-connection establishment delay before actual data can be transmitted. Relatively
-this is bad if the actual connection payload is short, like in many network
-applications.
+connection establishment delay before actual data can be transmitted. This can
+be hinder the communication performance if the actual connection payload is
+short.
 
 ![TLS protocol handshake](https://images.ctfassets.net/slt3lc6tev37/5aYOr5erfyNBq20X5djTco/3c859532c91f25d961b2884bf521c1eb/tls-ssl-handshake.png){: width="90%" .center-img }
 
 ## TLS in Rust
 
 A popular library (or crate) for using TLS in Rust applications is
-**[rustls](https://crates.io/crates/rustls)**. It provides the API for all
-necessary TLS protocol operations on top of TCP.
+**[rustls](https://crates.io/crates/rustls)**. It provides the API for using TLS
+on top of TCP.
 
 ### Client operation
 
-We have a modified version of our earlier simple client in
-examples directory, under
+We have a modified version of our earlier simple client in examples directory,
+under
 **[tls-client](https://github.com/PasiSa/pronets/blob/main/examples/tls-client/src/main.rs)**.
-We will walk through this example to see how **rustls** works in this simple
-client case. Again, you can clone the repository and try the example also on
-your own machine.
+Again, you can clone the repository and try the example also on your own
+machine.
 
 Like previous examples, we have a few command line arguments, and now an
 additional optional command line argument for specifying a root certificate
@@ -151,16 +152,16 @@ file, if we want to use such. If you test the program using one of the public
 servers (there is an example of `www.aalto.fi` case), this is not needed because
 the `webpki-roots` crate contains the commonly accepted root certificates.
 However, if we want test this locally, we need to specify our own root
-certificate that we can use to validate the incoming server certificate.
-Included file `cert/ca.crt` can be used, if you test using the certificate
-provided in **tls-server** example. That was used to sign the server certificate
-provided with the example.
+certificate that we can use to validate the incoming server certificate. The
+example directory contains file `cert/ca.crt` that is used to sign the
+certificate provided in **tls-server** example, and that can be used when
+testing against the server example.
 
 As a first step, starting on [line
 34](https://github.com/PasiSa/pronets/blob/dbf3770c7a4858e826b7782a2c7e496c57863c88/examples/tls-client/src/main.rs#L34),
 we separate the server name from command line argument, because it is compared
-to the name in incoming certificate, which must match. _rusttls_ has a dedicated
-`ServerName` type for holding this.
+to the common name in incoming certificate, which must match. _rusttls_ has a
+dedicated `ServerName` type for holding this.
 
 Starting on [line
 44](https://github.com/PasiSa/pronets/blob/dbf3770c7a4858e826b7782a2c7e496c57863c88/examples/tls-client/src/main.rs#L44),
@@ -171,19 +172,21 @@ available root certificates is stored in `roots` variable, of type
 
 Then we build TLS client configuration from this information ([line
 62](https://github.com/PasiSa/pronets/blob/dbf3770c7a4858e826b7782a2c7e496c57863c88/examples/tls-client/src/main.rs#L62)),
-and connect the TCP socket normally to the server, which may succeed or fail for
-various reasons, for example if server is not reachable. We create a new
-**rustls** `ClientConnection` object, which also starts the TLS handshake. If
-the handshake is successful and the server certificate is valid, we connect the
-TLS ClientConnection to the TCP socket as **rustls** `StreamOwned` type, as
-variable `socket`. After this we can use the read and write operations on the
-socket normally, except that now all communication happens as TLS encrypted.
+and connect the TCP client socket normally to the server. After this, we create
+a new `ClientConnection` object with the TLS configuration, which also starts
+the TLS handshake. If the handshake is successful and the server certificate is
+valid, we connect the TLS ClientConnection to the TCP socket as **rustls**
+`StreamOwned` type, as variable `socket`. After this we can use the read and
+write operations on the socket normally, except that now all communication
+happens as TLS encrypted.
 
-Finally, with TLS it is good to close the connection gracefully using the
-`send_close_notify` function, as we do on [line
+Finally, the client signals that it is done sending data and about to close the
+connection using the `send_close_notify` function, on [line
 78](https://github.com/PasiSa/pronets/blob/dbf3770c7a4858e826b7782a2c7e496c57863c88/examples/tls-client/src/main.rs#L78).
+This tells the other end that closing is planned, and not cut short for other
+reason.
 
-### Server operation with tokio
+### Server operation
 
 A TLS server example can be found under
 **[tls-server](https://github.com/PasiSa/pronets/blob/main/examples/tls-server/src/main.rs)**
@@ -198,17 +201,17 @@ PEM-encoded files representing **certificate** and **private key** that
 corresponds the public key in certificate as arguments. The _rustls_ crate reads
 these files and sets the server configuration based on these ([line
 46](https://github.com/PasiSa/pronets/blob/dbf3770c7a4858e826b7782a2c7e496c57863c88/examples/tls-server/src/main.rs#L46)).
-We can use the server certificate (_cert/server.crt_ and _cert/server.key_) and
-private key included in the repository. Note that **in reality, you would never
-add these files to git repository, and especially the private key should be kept
-secret!** (and not readable by other uses on the system). For the sake of the
-example, we make an exception here. The certificate is created using the
-_ca.crt_ included in the _tls-client_ directory.
+To test the example, we can use the server certificate (_cert/server.crt_ and
+_cert/server.key_) and private key included in the repository. Note that **in
+reality, you would never add these files to git repository, and especially the
+private key should be kept secret!** (and not readable by other uses on the
+system). The certificate was created using the _ca.crt_ included in the
+_tls-client_ directory, that the client can use to verify it.
 
 Similarly to **ClientConnection** on the client side, **TlsAcceptor** uses the
 TLS configuration to turn TCP connection into a TLS stream ([line
 51](https://github.com/PasiSa/pronets/blob/dbf3770c7a4858e826b7782a2c7e496c57863c88/examples/tls-server/src/main.rs#L51)).
-It is wrapped inside asynchronous reference counter (**Arc**), because each
+It is wrapped inside atomic reference counter (**Arc**), because each
 Tokio task needs to have access it.
 
 The TCP server socket is bound normally, and new connection is first accepted
@@ -227,7 +230,7 @@ systems, but if not, for example in Ubuntu Linux you could install it normally
 using _apt_: `sudo apt install openssl`
 
 A certificate can be investigated in following way on a command line
-(for our _server.crt_ certificate):
+(for certificate in file _server.crt_):
 
     openssl x509 -in server.crt -text -noout
 
@@ -241,8 +244,9 @@ given network address. For example, we can see the _www.aalto.fi_ certificate:
 
 ### Creating root certificate
 
-To create a private **root certificate authority** for local testing needs,
-we will first need to create a private key:
+To create a certificate for a local **root certificate authority**, the root
+CA operator (which in case of local testing of your implementation will be you)
+will first need to create a **private key**:
 
     openssl genpkey -algorithm RSA -out rootCA.key -pkeyopt rsa_keygen_bits:4096
 
@@ -270,7 +274,7 @@ information in the CA certificate:
 
 After this, the actual self-signed root CA certificate to file _rootCA.crt_ can
 be created based on the configuration. In this case the private key is in file
-_rootCA.key_ and the configuration in _root.cnf_.
+_rootCA.key_ and the configuration like above in _root.cnf_.
 
     openssl req \
         -new \
@@ -280,9 +284,12 @@ _rootCA.key_ and the configuration in _root.cnf_.
         -out rootCA.crt \
         -config root.cnf
 
-After these steps, we can create the actual server certificate. Creating the
-server certificate follows similar steps, although in this case it is useful to
-distinguish who does what. The **server administrator** creates a private key:
+### Creating server certificate
+
+After these steps, the root CA operator can create the actual server
+certificate. Creating the server certificate follows similar steps, although in
+this case it is useful to distinguish the tasks between the root CA and the
+server administrator. The **server administrator** creates a private key:
 
     openssl genpkey \
         -algorithm RSA \
@@ -292,7 +299,7 @@ distinguish who does what. The **server administrator** creates a private key:
 The permissions for the private key file, _server.key_, should be set such that
 only the server administrator can read it.
 
-The server administrator then creates the certificate configuration file, for
+The _server administrator_ then creates the certificate configuration file, for
 example:
 
     [ req ]
@@ -318,12 +325,15 @@ example:
     IP.2 = 127.0.0.1
     IP.3 = ::1
 
-The server's DNS name and IP address needs to match the CN or alternative names
-fields. If you are testing locally, you could just use localhost.
+The server's DNS name and IP address needs to match the common name (`CN`) or
+one of the alternative names fields (`DNS.X` or `IP.X`). As one can note, the
+same certificate can support multiple names and addresses, for example for
+different network interfaces or addressing scopes. If you are testing locally,
+you could just use `localhost`.
 
 Then the _server administrator_ creates a **certificate signing request** using
 the configuration file (_server.cnf_ in this case) and private key. In this
-case, this creates a file _server.csr_.
+case, this creates a file _server.csr_:
 
     openssl req \
         -new \
@@ -358,10 +368,10 @@ ourselves.
 
 ## Authorization and JSON Web Tokens
 
-There are different techniques for authenticating and authorizing users and
-clients. For example, TLS certificates can also authenticate clients, similarly
-to how they authenticate servers above. When both parties authenticate using
-certificates. This is called **mutual TLS (mTLS)**.
+There are different techniques for **authenticating** and **authorizing** users
+and clients. For example, TLS certificates can also authenticate clients,
+similarly to how they authenticate servers above. When both parties authenticate
+using certificates. This is called **mutual TLS (mTLS)**.
 
 In the following we will take a look into how to authorize client requests using
 **JSON Web Tokens (JWT)**, which are commonly used in network APIs. Typically,
@@ -376,35 +386,35 @@ able to determine the identity of the user (or client). This could happen
 through username / password login, using certificates, or some external identity
 service (e.g. based on bank credentials).
 
-When user identity is known, the service decides _what permissions does the user
-have and what resources they can access_. This is called **authorization**. In
-distributed service, one way to deliver this information the different service
-components is to use JSON Web Token that is signed by a trusted entity. JWT
-therefore is not an authentication protocol, but a format to deliver
-authorization information in a way that the intended receiver can parse in
-stateless and reliable way.
+When user identity is known, the it needs to be decided _what permissions does
+the user have and what resources they can access_. This is called
+**authorization**. In distributed service, one way to deliver this information
+the different service components is to use JSON Web Token that is signed by a
+entity deciding on authorization. JWT therefore is not an authentication
+protocol, but a format to deliver authorization information in a way that the
+intended receiver can parse in stateless and reliable way.
 
 Our course server does not implement authentication, but from this module
 onwards it requires a JWT token as an attribute to requests starting a Docker
 container. The token will be delivered to each project separately via MyCourses
-by the course personnel, and it is signed by the course personnel.
-Authentication has happened through normal Aalto course enrolment practices.
+by the course staff, and it is signed by the course staff. We trust that
+authentication has happened through normal Aalto login practices in MyCourses.
 
 ### JWT structure
 
 **JSON Web Token** ("JWT", specified in [RFC
 7519](https://datatracker.ietf.org/doc/html/rfc7519)) is a JSON - formatted data
 structure that is encoded using _Base64URL_ encoding (specified in [RFC
-4648](https://datatracker.ietf.org/doc/html/rfc4648)), that converts any data
-into a string stream composed from 64-bit character set that can be handled by
-text based systems and protocols (such as old versions of HTTP). JWTs can be
-either **JSON Web Signature (JWS)** or **JSON Web Encryption (JWE)** type. In
-the following we will discuss JWS. The signing format is discussed in more
-detail in [RFC 7515](https://datatracker.ietf.org/doc/html/rfc7515).
+4648](https://datatracker.ietf.org/doc/html/rfc4648)), that converts the JSON
+data into a compact string stream composed from 64-bit character set that can be
+handled by text based systems and protocols (such as old versions of HTTP). JWTs
+can be either **JSON Web Signature (JWS)** or **JSON Web Encryption (JWE)**
+type. In the following we will discuss JWS, that is described in
+more detail in [RFC 7515](https://datatracker.ietf.org/doc/html/rfc7515).
 
-One nice property of the JWT is that it does not require state at the server:
-all needed information for authorization is contained within the token itself.
-The JSON data is composed from three parts:
+One nice property of the JWT is that it does not necessarily require state at
+the server: all needed information for authorization is contained within the
+token itself. The JSON data is composed from three parts:
 
 - **Header** (also known as JSON Object Signing and Encryption (JOSE) Header)
   contains information about the algorithm used for signing the data.
@@ -412,7 +422,7 @@ The JSON data is composed from three parts:
 - **Signature** contains the signature made by the issuer of the token, using
   the algorithm indicated in the header.
 
-For example, a typical header of the token could be:
+The token header is often like this:
 
 ```json
 {
@@ -422,7 +432,7 @@ For example, a typical header of the token could be:
 ```
 
 This indicates that what follows is a JSON Web Token, and we are using **HS256**
-algorithm based on shared secret to sign the token.The payload has claims such
+algorithm based on shared secret to sign the token. The payload has claims such
 as:
 
 ```json
@@ -434,10 +444,10 @@ as:
 ```
 
 The Base64URL encoded the tokens typically start something like: `eyJ0...`,
-because the header part is often the same. It is good to understand that even
-though the token seems unreadable at first sight, it is not encrypted,
-and can be parsed from the Base64URL encoding back to the JSON format. This is
-a fairly straightforward programming task following [RFC
+because the header part is often the same and starts with curly braces. It is
+good to understand that even though the token seems unreadable at first sight,
+it is not encrypted, and can be parsed from the Base64URL encoding back to the
+JSON format. This is a fairly straightforward programming task following [RFC
 4648](https://datatracker.ietf.org/doc/html/rfc4648), and there are web-based
 tools for [encoding](https://www.base64encode.org/) and
 [decoding](https://www.base64decode.org/) tokens. However, the signature at the
@@ -450,18 +460,18 @@ There are two kinds of JSON claims: the registered claim names are defined in
 the JWT specification ([RFC 7519, section
 4](https://datatracker.ietf.org/doc/html/rfc7519#section-4)), and are common
 attributes that can be used across different services and applications. In
-addition to registered claims, there can be application-specific claims that are
-specific to certain kind of application.
+addition to registered claims, there can be application-specific claims that
+application developer can freely choose based on the needs of the application.
 
 There are altogether seven registered claim names as detailed in the
 specification, here are a few common ones:
 
 - **`iss` (issuer)** describes who issued (or created) this JWT. The format of
   issuer name is not specified and is application specific. It could be based on
-  domain name of the identity service that authenticated an user, for exmample.
+  domain name of the identity service that authenticated an user, for example.
 - **`sub` (subject)** describes the target or the subject of the JWT. For
   example, it could be the username or an authenticated user (or a container
-  name of an authorized Docker container, closer to our case).
+  name of an authorized Docker container, as with our course server).
 - **`exp` (expiration time)** indicates the time after which the JWT is not
   valid, and should not be accepted anymore. The expiration time is indicated as
   number of seconds from the start of 1970, a common format in standards and
@@ -475,9 +485,12 @@ specification, here are a few common ones:
 
 There are two kinds of models for signing the JWTs. In the **symmetric** variant
 he token issuer and server that validates the token can use a **shared secret**.
-Commonly, **HS256** is the algorithm used in this case. Shared secret is at
-least 32-byte random value that is distributed between issuer and server
-instances using the token.
+Commonly, **HS256** is the algorithm used in this case. Shared secret is
+recommended to be at least 32-byte random value that is distributed between
+issuer and server instances using the token. OpenSSL can be used to generate
+random values, for example with following, for a 32-byte value:
+
+    openssl rand -hex 32
 
 Alternatively, an **asymmetric** variant is to use **private key and public
 key**. In this case only the token issuer holds the private key, and all servers
@@ -487,7 +500,7 @@ algorithm is used in this case.
 Benefit of the symmetric variant is that it is simple, but sharing the secret
 means that anyone possessing the secret can create tokens, so all parties need
 to trust each other. Therefore the asymmetric variant is often preferred, if
-there are multiple services that need to verify the tokens.
+there are multiple servers that need to verify the tokens.
 
 At the server, after the token signature is verified, the server will
 investigate the claims to determine what the client is allowed to do. For
@@ -499,9 +512,9 @@ for, for example different user roles (e.g., student, teacher, admin).
 ### Rust implementation
 
 The [`jsonwebtoken` crate](https://docs.rs/crate/jsonwebtoken/10.3.0) can
-serialize claims and sign them to create a JWT. Below is an example of
-`Cargo.toml` additions to take it into use. **serde** is the crate for
-serializing structure data into e.g. JSON format, and vice versa.
+serialize claims into Base64URL encoded format, and sign them to create a JWT.
+Below is an example of `Cargo.toml` additions to take it into use. **serde** is
+the crate for serializing structure data into e.g. JSON format, and vice versa.
 
 ```toml
 [dependencies]
@@ -510,9 +523,16 @@ serde = { version = "1", features = ["derive"] }
 ```
 
 The following example creates a token signed with HS256, valid for one hour.
-Before running it, set the `JWT_SECRET` environment variable to a securely
-generated random secret of at least 32 bytes, shared with the server that
-verifies the token.
+Before running the program, the `JWT_SECRET` environment variable needs to be
+set to contain a random secret of at least 32 bytes. The secret is then shared
+with the server that verifies the token. This could happen, for example in the
+following way on a command line, if we are using cargo to run the program:
+
+    JWT_SECRET="myrandomsecret" cargo run
+
+The secret could also be included in a file that is protected from outside
+users. In this case the example would need to be slightly modified where secret
+is set, though.
 
 ```rust
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
@@ -563,7 +583,8 @@ server uses the same secret to verify the signature before trusting the claims.
 The following server-side example reads a received token from a command-line
 argument. It verifies the HS256 signature, expiration time, and expected issuer
 before using the project identifier. It uses the same dependencies and
-`JWT_SECRET` as the token issuer above.
+`JWT_SECRET` as the token issuer above. Note that the environment variable is
+always specific to local session, so it needs to be separately set at server.
 
 ```rust
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
@@ -614,10 +635,10 @@ server. For example, a leeway of 60 allows a token to pass the expiration check
 for up to 60 seconds after its `exp` time. The example sets `leeway` to zero so
 that expired tokens are rejected without this tolerance.
 
-If verification fails, `decode` returns an error and the server must reject the
-request. In a network server, pass the token received from the client to
-`decode` and use the verified claims to check whether the project is authorized
-for the requested operation.
+The network server should pass the token received from the client to `decode`
+function and use the verified claims to check whether the project is authorized
+for the requested operation. If verification fails, `decode` returns an error
+and the server must reject the request.
 
 <div class="assignment-frame" markdown="1">
 
@@ -625,10 +646,10 @@ for the requested operation.
 
 You have received a JWT token you should use from this point on to authenticate
 your requests to start and restart your container (detailed instructions as
-MyCourses announcment).
+MyCourses announcement).
 
 **Part 1:** Decode the token you received, and report what claims it contains.
-When does the token expire? Is it good idea to have a token with very long
+When does the token expire? Is it good idea to have a token with long
 lifetime (justify any benefits and drawbacks)? Is the token valid or not?
 
 **Part 2 (a)**: Check the certificate of our course server
@@ -664,7 +685,7 @@ request in the following ways:
 - Connect the course server, `pronets1.dice.aalto.fi` using TLS, to TCP port 443
   (i.e., "HTTPS"). Note that the course server certificate is created by
   generally trusted public CA and therefore you should not need to add any
-  custom root CAs in your implementation for the request.
+  custom root CAs in your implementation for verifying the server.
 
 - We will now use a new POST endpoint, `run-docker-secure` that only works with
   TLS. There should be new header field in the HTTP request that follows the
@@ -681,26 +702,27 @@ request in the following ways:
   `"secure": true`
 
   to indicate that your server now requires TLS (there is a small icon in course
-  server user interface to tell this). Remember also that there is an optional
-  `env` attribute to set environment variables to your container, for example:
+  server user interface to tell this). In case you need it, there is also an
+  optional `env` attribute that can be included in JSON payload, to set
+  environment variables to your container, for example:
 
   `"env": ["RUST_LOG=debug", "SECRET_VALUE=xyz"]`
 
-Tell your report what JSON parameters you used in the POST requests, and whether
+Tell your report what JSON parameters you used in the POST request, and whether
 you got your secure implementation successfully running. Connect your server
 container using your client running in your local machine and test the messages
 implemented so far (TST, USR, MSG, MET).
 
-**Part 5 (optional):** If you are itching to do something extra, implement a new
-message `AUT` ("authorized user") that takes a JWT as a parameter. This would be
-used as a more secure alternative to the earlier `USR` message, to register
-users to your service. You can decide what claims to use in the token (probably
-at least `sub` for the username), based or your project needs, and how to
-distribute the tokens (you might, for example, have a simple login service that
-creates the tokens with valid username and password). This part is not required
-for full points from this assignment. **Don't include the secret used to create
-and validate in your git repository!** This is a good use case for the `env`
-attribute described above.
+**Part 5 (optional):** If you have time and interest to do something extra,
+implement a new message `AUT` ("authorized user") that takes a JWT as a
+parameter. This would be used as a more secure alternative to the earlier `USR`
+message, to register users to your service. You can decide what claims to use in
+the token (probably at least `sub` for the username), based or your project
+needs, and how to distribute the tokens (you might, for example, have a simple
+login service that creates the tokens with valid username and password). This
+part is not required for full points from this assignment. **Don't include the
+secret used to create and validate in your git repository!** This is a good use
+case for the `env` attribute described above.
 
 If you implemented part 5, tell in the report what claims you use in your
 implementation.
