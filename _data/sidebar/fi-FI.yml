@@ -17,6 +17,8 @@
       url: /fi/testing/
     - title: 6. Rinnakkaisuus
       url: /fi/concurrency/
+    - title: 7. Tietoturva
+      url: /fi/security/
 
 - title: Koodiesimerkit
   url: /examples/

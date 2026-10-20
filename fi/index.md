@@ -35,7 +35,7 @@ Kurssimateriaali koostuu seuraavista osioista:
 1. [Protokollasuunnittelu ja projekti](protocol/)
 1. [Testaus ja havainnoitavuus](testing/)
 1. [Rinnakkaisuus ja asynkroninen ohjelmointi](concurrency/)
-1. Tietoturva
+1. [Tietoturva](security/)
 1. UDP ja reaaliaikainen tiedonsiirto
 
 **Tekoälyn käytöstä:** Kurssilla ei rajoiteta tekoälytyökalujen käyttöä
