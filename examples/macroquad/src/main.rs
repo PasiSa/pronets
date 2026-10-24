@@ -1,4 +1,7 @@
 use macroquad::prelude::*;
+use std::collections::HashMap;
+
+mod comms;
 
 const ACCELERATION: f32 = 200.0; // Pixels per second squared.
 const TURN_SPEED: f32 = 2.0; // Radians per second.
@@ -16,13 +19,14 @@ struct Car {
 
 #[macroquad::main("Racing")]
 async fn main() {
-
-     let mut car = Car {
+    let mut car = Car {
         pos: vec2(400.0, 300.0),
         angle: 0.0,
         speed: 0.0,
         texture: load_texture("car.png").await.unwrap(),
     };
+    let (local_updates, remote_updates) = comms::start();
+    let mut remote_cars = HashMap::new();
 
     loop {
         // Delta time: seconds since the last frame. Multiply rates by dt to keep
@@ -55,7 +59,32 @@ async fn main() {
         // Move the car in the direction it's facing, scaled by its speed and the time
         // since the last frame.
         car.pos += direction * car.speed * dt;
+
+        // Never block rendering on the communication thread. A full queue means
+        // the worker is busy, so skip this frame's outgoing update.
+        let _ = local_updates.try_send(comms::CarState {
+            x: car.pos.x,
+            y: car.pos.y,
+            angle: car.angle,
+        });
+        for update in remote_updates.try_iter() {
+            remote_cars.insert(update.player_id, update.state);
+        }
         clear_background(DARKGREEN);
+
+        // This stays empty until the socket receive placeholder produces updates.
+        for state in remote_cars.values() {
+            draw_texture_ex(
+                &car.texture,
+                state.x,
+                state.y,
+                LIGHTGRAY,
+                DrawTextureParams {
+                    rotation: state.angle,
+                    ..Default::default()
+                },
+            );
+        }
 
         // Draw the car texture at its screen position. WHITE preserves its original
         // colors, and DrawTextureParams rotates it by car.angle (in radians)
