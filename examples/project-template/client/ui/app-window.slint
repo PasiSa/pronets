@@ -1,26 +1,35 @@
 import { Button, LineEdit, TextEdit, VerticalBox } from "std-widgets.slint";
 
+// Exporting the component makes AppWindow available to Rust.
 export component AppWindow inherits Window {
     title: "Demo TCP Chat Client";
     width: 600px;
     height: 400px;
 
+    // Shared UI state: Rust reads/writes this with get_conversation()/set_conversation().
     in-out property <string> conversation;
+    // Rust registers handlers with on_send_message() and on_send_test().
     callback send-message(string);
     callback send-test();
 
+    // Arrange the conversation, input field, and button from top to bottom.
     VerticalBox {
         padding: 8px;
         spacing: 8px;
 
         TextEdit {
+            // `root` refers to AppWindow. This binding updates when Rust changes
+            // the conversation property in append_to_conversation().
             text: root.conversation;
             read-only: true;
+            // Let the conversation area take the remaining vertical space.
             vertical-stretch: 1;
         }
 
         message-input := LineEdit {
             placeholder-text: "Type a message";
+            // Pressing Enter invokes the Rust callback with this field's text,
+            // then clears the field. `self` refers to this LineEdit.
             accepted => {
                 root.send-message(self.text);
                 self.text = "";
@@ -29,6 +38,7 @@ export component AppWindow inherits Window {
 
         Button {
             text: "Send test";
+            // Notify Rust; the callback handler prepares and sends the test data.
             clicked => { root.send-test(); }
         }
     }

@@ -32,16 +32,20 @@ fn main() -> io::Result<()> {
 
     println!("Connecting to {}...", address);
 
-    // Create the main application window, based on the Slint UI definition in ui.slint
+    // Create the main application window, based on the Slint UI definition.
     let window =
         AppWindow::new().map_err(|err| io::Error::new(io::ErrorKind::Other, err.to_string()))?;
+    
+    // Weak reference to window to avoid circular reference.
+    // Weak reference is used so that callbacks stored by the window do not
+    // keep the window alive through a reference cycle (like strong reference would do).
     let weak_window = window.as_weak();
 
     // Start separate thread to handle socket communication.
     // The closure passed to start_socket_io will be called whenever a
     // new message is received from the server.
     //
-    // Messages cross the UI/socket thread boundary through channels: UI callbacks
+    // Messages cross the UI/socket thread boundary through mpsc channels: UI callbacks
     // send bytes through the returned `outbound` sender to the socket thread, while
     // received messages enter this callback and are queued onto Slint's event loop
     // so that conversation state is updated only from the UI thread.
@@ -74,6 +78,8 @@ fn main() -> io::Result<()> {
         }
 
         // Append the sent message to the conversation area in the UI
+        // Week reference needs to be accessed using upgrade()
+        // to get a strong reference to the window, if it still exists.
         if let Some(window) = weak_window.upgrade() {
             append_to_conversation(&window, message);
         }
