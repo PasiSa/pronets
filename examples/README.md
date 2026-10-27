@@ -33,6 +33,12 @@ The examples are as follows:
   bytes. Used to demonstrate the effect of socket buffering on socket API
   behavior.
 
+- **[simple-udp](https://github.com/PasiSa/pronets/tree/main/examples/simple-udp/src/main.rs)**:
+  Simple UDP example where client reads input from user and sends it to a UDP
+  server, then reads a response back. Server waits for incoming datagrams, and
+  echoes them back to client. Both client and server implementations are in the
+  same source in their respective functions.
+
 ## Project template
 
 - **[project-template](https://github.com/PasiSa/pronets/tree/main/examples/project-template)**:
