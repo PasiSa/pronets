@@ -1,0 +1,12 @@
+[package]
+name = "voicechat-test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+# PulseAudio is needed in WSL builds
+cpal = { version = "0.18", features = ["pulseaudio"] }
+crossterm = "0.29"
+opus = "0.4"
+ringbuf = "0.5"

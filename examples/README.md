@@ -98,8 +98,12 @@ tested together using the local certificates provided.
   needed certificate and private key are located in the `cert` directory, which
   you need to give as command line argument.
 
-## GUI examples
+## GUI and audio examples
 
 - **[macroquad](https://github.com/PasiSa/pronets/tree/main/examples/macroquad/src/main.rs)**:
   Simple example demonstrating a moving and rotating object using the
   **[Macroquad](https://macroquad.rs/)** library, as controlled by arrow keys.
+
+- **[audio-streaming](https://github.com/PasiSa/pronets/tree/main/examples/audio-streaming/src/main.rs)**:
+  demonstrates use of [CPAL](https://crates.io/crates/cpal) crate to sample
+  audio into UDP datagrams, and play audio from arriving UDP datagrams.
