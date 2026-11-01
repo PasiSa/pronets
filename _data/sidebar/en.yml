@@ -19,6 +19,8 @@
       url: /concurrency/
     - title: 7. Security
       url: /security/
+    - title: 8. UDP Sockets
+      url: /udp/
 
 - title: Code Examples
   url: /examples/
