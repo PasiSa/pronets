@@ -4,8 +4,6 @@ lang: en
 translation_key: udp
 ---
 
-## User Datagram Protocol and datagram sockets
-
 So far we have been using TCP, a **connection-oriented** protocol providing
 **reliable stream communication** service between two connection end points. A
 TCP connection starts with a **three-way handshake** that initializes the needed
@@ -13,7 +11,27 @@ state at both ends of the connection. To ensure reliability, data is buffered at
 the both ends of the connection, and data segments are retransmitted if the
 receiver does not acknowledge them in due time. TCP sender also controls the
 rate at which it is sending data, to avoid congesting the network. While
-providing reliable service, all this adds delay to the data transmissions.
+providing reliable service, all this adds delay to the data transmissions. We
+will now take a look at a very different protocol: unreliable UDP.
+
+<div class="objectives-frame" markdown="1">
+
+**Objectives for this module:**
+
+- You will **learn the basics of using datagram** sockets, and their differences
+  to stream socket semantics. Commonly, datagram sockets are used to communicate
+  with UDP protocol.
+
+- Through a simple example, you will get an **basic understanding how to set up
+  real-time communication using UDP**, using clap library.
+
+- You will **understand how stateful Network Address Translators and firewalls**
+  affect the communication between two end-hosts, and how to solve the
+  difficulties the cause in reaching the other host.
+
+</div>
+
+## User Datagram Protocol and datagram sockets
 
 The **User Datagram Protocol, UDP ([RFC
 768](https://datatracker.ietf.org/doc/html/rfc768))**, is different to TCP in
@@ -398,3 +416,11 @@ relay server in the public Internet to receive this datagrams, and pass them on
 to the intended receiver.
 
 ![Relay server](/images/udp-relay.svg){: width="100%" .center-img }
+
+<div class="assignment-frame" markdown="1">
+
+## About assignment
+
+This module does not have a related assignment. Good luck with the project!
+
+</div>
