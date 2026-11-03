@@ -40,6 +40,8 @@ jobs:
           path: images
           output: .
           format: svg
+          # Include clipart in the SVG instead of referencing draw.io's assets.
+          embed-svg-images: true
           transparent: true
           remove-page-suffix: true
           action-mode: all
