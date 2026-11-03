@@ -428,6 +428,10 @@ tietosähkeet ja välittää ne tarkoitetulle vastaanottajalle.
 
 ![Välityspalvelin](/images/udp-relay.svg){: width="100%" .center-img }
 
+<div class="assignment-frame" markdown="1">
+
 ## Tehtävästä
 
 Tähän moduuliin ei liity tehtävää. Onnea projektiin!
+
+</div>
