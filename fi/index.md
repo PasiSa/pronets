@@ -36,7 +36,7 @@ Kurssimateriaali koostuu seuraavista osioista:
 1. [Testaus ja havainnoitavuus](testing/)
 1. [Rinnakkaisuus ja asynkroninen ohjelmointi](concurrency/)
 1. [Tietoturva](security/)
-1. UDP ja reaaliaikainen tiedonsiirto
+1. [UDP ja reaaliaikainen tiedonsiirto](udp/)
 
 **Tekoälyn käytöstä:** Kurssilla ei rajoiteta tekoälytyökalujen käyttöä
 ohjelmakoodin kehittämisessä, kunhan tarkistat tuottamasti koodin ja ymmärrät

@@ -12,7 +12,9 @@ the both ends of the connection, and data segments are retransmitted if the
 receiver does not acknowledge them in due time. TCP sender also controls the
 rate at which it is sending data, to avoid congesting the network. While
 providing reliable service, all this adds delay to the data transmissions. We
-will now take a look at a very different protocol: unreliable UDP.
+will now take a look at a very different protocol: User Datagram protocol that
+is not reliable, but offers more predictable delays, useful for applications
+with time constraints on data delivery.
 
 <div class="objectives-frame" markdown="1">
 
@@ -47,14 +49,14 @@ to find message boundaries. With UDP this is not needed: when we read the next
 datagram, we know that it always starts from the beginning, as sender has
 intended.
 
-UDP is unreliable and does not have transport-level acknowledgments to indicate
-received data. If the sending application needs a confirmation that a message
-was actually received, the receiving application needs to send an acknowledgment
-back. Because UDP is not reliable and does not have retransmissions or
-congestion control, there is less need of buffering (i.e., less delay), although
-some buffers are used also with UDP sockets. Therefore UDP is a viable choice
-for applications where timeliness of data delivery is important, such as
-conversational real-time audio and video, or online gaming.
+Unlike TCP, unreliable UDP does not have transport-level acknowledgments to
+indicate received data. If the sending application needs a confirmation that a
+message was actually received, the receiving application needs to send an
+acknowledgment back. Because UDP does not have retransmissions or congestion
+control, there is less need of buffering (i.e., less delay), although some
+buffers are used also with UDP sockets. Therefore UDP is a viable choice for
+applications where predictable delays are important and preferably as short as
+possible, such as conversational real-time audio and video, or online gaming.
 
 Because UDP is not connection-oriented, no `connect()` operation is needed to
 start the communication, and the same UDP socket can be used to send data to
@@ -74,7 +76,7 @@ that demonstrates how datagram sockets and UDP are used. The `main()` function
 is at the end of the file, and is very short. It just parses a couple of command
 line arguments using the `clap` crate, and depending on the arguments given,
 assumes the role of server or the client, both implemented in separate
-functions.
+functions in the same program.
 
 **Binding the socket.** The client function begins by creating the UDP socket
 with the `bind()` call:
@@ -85,19 +87,19 @@ let socket = UdpSocket::bind("0.0.0.0:0")?;
 
 Because UDP is not connection-oriented, there is no need for `connect()` call.
 With these arguments, the call asks system to pick any available UDP port for
-the local end, along with one of the IP addresses available in the local system.
+the local end, along with any IP address available in the local system.
 In fact, when `connect()` is called for TCP socket, it implicitly does the same
-operations. Of course, with this function we could give a specific IP address
+operations. With this function we could also give a specific IP address
 and port if we wanted (also for a TCP socket before calling `connect()`).
 
 Note that even though UDP ports are also allocated from a similar unsigned
 16-bit number range as TCP ports, the two port namespaces are separate.
 Therefore, if your project already binds to TCP port 1234 for listening the
 client connections, you can also bind to UDP port 1234 at the same time to
-handle real-time communication for your project.
+handle, for example, real-time communication for your project.
 
-**Sending data.** The program reads a line from user into a `String` and sends it to a destination
-using `send_to()` function:
+**Sending data.** The program reads a line from user into a `String` and sends
+it to a destination using `send_to()` function:
 
 ```rust
  if let Err(err) = socket.send_to(input.trim().as_bytes(), &args.connect_addr) {
@@ -120,13 +122,15 @@ next user input.
 
 It is good to note that also `send_to()` call can block even when used with UDP,
 unless for non-blocking I/O is used, for the same basic reason as with TCP: the
-operating system queues the data into socket send buffers until the network
-device driver can actually send the data. Beacuse UDP is not reliable or does
-not apply congestion control, with UDP the blocks are likely shorter and less
-common than with TCP, but it is possible that a fast sending application may
-outpace operating system kernel under some circumstances. For example, there may
-be situation that the network device is temporarily not ready for sending, which
-may cause delay in data delivery.
+operating system places the data into socket send buffers until the network
+device driver can actually send the data, and it is possible that these buffers
+get full if the sending application is sending fast. Because UDP is not reliable
+or does not apply congestion control, with UDP, such block events are likely
+shorter and less common than with TCP, but it is possible that a fast sending
+application may outpace operating system kernel under some circumstances. For
+example, there may be situation that the network device is temporarily not ready
+for sending, which may cause the data to be queued in the socket buffers on
+upper protocol layers.
 
 **Receiving data.** After the data is sent, the client waits for server response
 in a `match` statement:
@@ -142,11 +146,12 @@ let (size, src) = match socket.recv_from(&mut buf) {
 ```
 
 Because we are using unconnected socket, we need a different function also for
-receiving. `recv_from()` works otherwise similarly as e.g. `read` function (or
-rather `read_all`, since datagrams are delivered as whole), but it returns a
-tuple of two values: in addition to the number of bytes received, it return the
-address from where the datagram arrived (`src` in this case). As with sending,
-`recv_from()` can receive datagrams from different senders in the same socket.
+receiving than what we used with TCP. `recv_from()` works otherwise similarly as
+e.g. `read` function (or rather `read_all`, since datagrams are delivered as
+whole), but it returns a tuple of two values: in addition to the number of bytes
+received, it return the address from where the datagram arrived (`src` in this
+case). As with sending, `recv_from()` can receive datagrams from different
+senders in the same socket.
 
 The `recv_from()` call waits until datagram comes in. In this example it is ok,
 but in a more complicated application with different input sources, the usual
@@ -165,12 +170,13 @@ socket. This fixes the socket with one particular remote end. After this the
 normal `read` and `write` operations can be used, and datagrams from other
 addresses are not received. In terms of transport protocol operation the
 `connect()` call does not have any effect: there is still no three-way handshake
-for UDP protocol. However, there is one benefit: If the other end detects an
-error, for example because the destination port was not ready for receiving
-datagrams, it can send an **ICMP error message** back to the sender, even though
-there is no actual protocol-level stateful connection. If the UDP socket was
-connected, the operating system can deliver this error to the socket as an error
-code.
+for UDP protocol. However, there is one benefit: If a network device detects an
+error, for example because the destination host was not reachable, it can send
+an **ICMP error message** back to the sender, even though there is no actual
+protocol-level stateful connection. If the UDP socket was connected, the
+operating system can deliver this error to the socket as an error code, because
+the ICMP message contains the protocol headers of the original packet, including
+the port number of the source.
 
 ## Real-time audio streaming
 
@@ -220,13 +226,13 @@ interaction with CPAL and various buffers.
 
 For audio output based on incoming UDP packets, a **ring buffer** `ring` is
 used. Receiving incoming UDP datagrams is done in a separate thread, and the
-ring buffer is split into `decoder_producer` that is moved inside the thread,
-and `decoder_consumer` that is used by the **output callback function**. Ring
-buffer is a common structure in data communication: it maintains the location
-where the next data item should be written, and the location where the consumer
-should read next. The ring structure allows to efficiently access the
-data to process a continuous ongoing stream without having to reallocate the
-buffer later.
+ring buffer is split into `decoder_producer` handle that is moved inside the
+thread, and `decoder_consumer` handle that is used by the **output callback
+function** from the main thread. Ring buffer is a common structure in data
+communication: it maintains the location where the next data item should be
+written, and the location where the consumer should read next. The ring
+structure allows to efficiently access the data to process a continuous ongoing
+stream without having to reallocate the buffer later.
 
 The output callback function is simple: it just checks if there is data
 available in the buffer, and if so, it is copied to audio output buffer given by
@@ -254,36 +260,37 @@ the voice. The Opus decoding maintains decoding state across multiple frames, so
 the distortion can be longer than the length of single piece of audio in the
 datagram.
 
-To mitigate the effects of reordering, the application could be improved by
-adding a **jitter buffer**, i.e. if there are out-of-order datagrams, delaying
-them for a short while, hoping that the missing piece of data arrives in a few
-milliseconds. This trades a bit of additional delay in audio playback for
-possibly improved playback quality. Detecting out of order datagrams would
-require that we add some protocol headers to the UDP datagrams, to indicate a
-sequence number or sending timestamp of the packet (or both). Opus is also able
-to apply "packet-loss concealment" algorithm to mitigate the user-perceived
-distortion caused by the lost packet. In order for this to work, it would need
-to know about the loss event, which is only possible if we have sequence numbers
-with the datagrams.
+To mitigate the effects of reordering and variable delays, the application could
+be improved by adding a **jitter buffer**, that is used to delay incoming
+datagrams for a short while, giving additional chance for a delayed data to
+arrive at the correct place in the data stream. This trades a bit of additional
+delay in audio playback for possibly improved playback quality. Detecting out of
+order datagrams would require that we add some protocol headers to the UDP
+datagrams, to indicate a sequence number or sending timestamp of the packet (or
+both). Opus is also able to apply "packet-loss concealment" algorithm to
+mitigate the user-perceived distortion caused by the lost packet. In order for
+this to work, it would need to know about the loss event, which is only possible
+if we have sequence numbers with the datagrams.
 
 The IETF has specified the **Real-time Transport Protocol (RTP, [RFC
 3550](https://datatracker.ietf.org/doc/html/rfc3550))** on top of UDP for audio
 and video delivery. RTP adds a header containing a sequence number, a media
-timestamp, and identifiers for the source and payload format. In our example, an
-RTP header would precede the encoded Opus audio inside each UDP datagram.
+timestamp, and identifiers for the source and payload format. If it had been
+implemented, in our example the RTP header would precede the encoded Opus audio
+inside each UDP datagram.
 
 RTP does not itself guarantee delivery or implement a jitter buffer: the
 receiving application uses the header information to reorder packets, decide
 when to play them, and detect when audio needs concealment. The accompanying
 **RTP Control Protocol (RTCP)** provides reception reports, including packet
-loss and arrival-time variation, which applications can use to monitor quality
-and adapt transmission.
+loss and arrival-time variation, which sendong application can use to monitor
+quality and adapt transmission rate to match the network capacity.
 
 ## Network Address Translation and firewalls
 
 The first module shortly discussed different types of IP addresses. When
 communicating over the Internet, only global IP addresses can be used.
-Especially with the 32-bit IPv4 address space there is only a limited number of
+In the 32-bit IPv4 address space there is only a limited number of
 global IPv4 address available. The available address blocks are already assigned
 to different network operators, that further distribute them to their customers.
 At the same time the number of Internet hosts (and needed IP addresses) is
@@ -308,12 +315,14 @@ mapping table in its memory with source and destination IP addresses and ports
 before and after translation, to be able to do the same address conversion to
 the consecutive packets belonging to the same connection. Because multiple hosts
 may share the same publicly routable IP address, in some cases also the port
-number needs to be reassigned, to distinguish between connections that happen
-use the same local port number in the private side of the network.
+number needs to be reassigned, to distinguish between connections from to
+different private addresses that happen use the same local port number in the
+private side of the network. Two distinct connections cannot use the same IP
+address-port pair.
 
 The below picture shows a case with two hosts behind a wireless gateway, using
 private IP addresses (`192.168.1.2` and `192.168.1.3`). The gateway has been
-assigned a public IP address `195.148.2.7`. Let's assume that both hosts open a
+assigned a public IP address `195.148.2.7`. In this example both hosts open a
 TCP connection to server at public IP address `128.4.64.10`, and happen to bind
 the same local TCP port 5000 for connection. This is possible, because they are
 separate hosts, unaware of one another. The gateway router makes a NAT
@@ -348,11 +357,11 @@ The earlier Internet protocols, such as historic FTP (for file transfers) or
 3261](https://datatracker.ietf.org/doc/html/rfc3261))**, a signaling protocol
 for setting up and managing conversational sessions, e.g. for voice over IP
 communicated IP addresses and TCP/UDP ports of the endpoints so that direct
-connections could be established between them. When NATs are present such direct
-peer-to-peer connections, that would be useful e.g. in direct voice sessions,
-are not directly possible.
+connections could be established between them. When NATs are present, such
+direct peer-to-peer connections are not possible, because the actual private
+address is not routable or visible to the other end.
 
-In particular there are a few challenges:
+More specifically, there are a few challenges:
 
 - A host can learn the local IP address and port using the `local_addr()`
   function. If host tries the communicate this address in a protocol message
@@ -398,14 +407,15 @@ firewall, and the connection state needs to be refreshed over longer periods of
 inactivity.
 
 One way to enable communication between hosts behind NAT is to use a **relay
-host** with a publicly reachable IP address. Both endpoints first send UDP
-datagrams to the relay, creating NAT mappings that allow the relay to send
-datagrams back to them. Instead of sending for example UDP-based audio directly
-to each other, the endpoints send it to the relay, which forwards it to the
-intended recipient through these mappings. The cost of this approach is that it
-can increase delay and requires the relay to carry all the forwarded traffic.
-**TURN ([RFC 8656](https://datatracker.ietf.org/doc/html/rfc8656))** is a
-standardized protocol for this purpose.
+host** with a publicly reachable IP address. In this case the endpoints send the
+UDP datagrams to the relay server, creating NAT mappings at their gateways that
+allow the relay to send datagrams back to them. All communication happens via
+the relay, that forwards the datagrams to the intended recipient. The cost of
+this approach is that it increases delay because the relay carries all
+the forwarded traffic. Someone also has to make such relay server available in
+the Internet. **TURN ([RFC
+8656](https://datatracker.ietf.org/doc/html/rfc8656))** is a standardized
+protocol for this purpose.
 
 The below picture illustrates the situation with relay server. For a
 peer-to-peer session (e.g. voice chat), it would be most efficient if `host 1`

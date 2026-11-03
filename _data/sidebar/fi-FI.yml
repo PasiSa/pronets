@@ -19,6 +19,8 @@
       url: /fi/concurrency/
     - title: 7. Tietoturva
       url: /fi/security/
+    - title: 8. UDP-kommunikointi
+      url: /fi/udp/
 
 - title: Koodiesimerkit
   url: /examples/
