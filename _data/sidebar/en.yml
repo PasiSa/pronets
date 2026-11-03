@@ -25,3 +25,7 @@
 - title: Code Examples
   url: /examples/
   icon: "fas fa-code"
+
+- title: Project goals
+  url: /project/
+  icon: "fas fa-bullseye"

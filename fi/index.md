@@ -6,8 +6,10 @@ translation_key: home
 permalink: /fi/
 ---
 
-Nämä sivut sisältävät **Verkkojärjestelmien ohjelmointi** (Programming
-Networked Systems) - kurssin materiaalin ja tehtävät. Viikoittaiset käytännön
+# Verkkojärjestelmien ohjelmointi -kurssi
+
+Nämä sivut sisältävät Aalto-yliopiston **Verkkojärjestelmien ohjelmointi
+(Programming Networked Systems, ELEC-C7260)** -kurssin materiaalin ja tehtävät. Viikoittaiset käytännön
 järjestelyt ja tehtävien palautuslomakkeet löytyvät
 **[MyCoursesista](https://mycourses.aalto.fi/course/view.php?id=51401)**.
 
@@ -38,8 +40,11 @@ Kurssimateriaali koostuu seuraavista osioista:
 1. [Tietoturva](security/)
 1. [UDP ja reaaliaikainen tiedonsiirto](udp/)
 
+Projektin tavoitteet ja arviointiperusteet on kuvattu **[erillisellä
+sivulla](project/)**.
+
 **Tekoälyn käytöstä:** Kurssilla ei rajoiteta tekoälytyökalujen käyttöä
-ohjelmakoodin kehittämisessä, kunhan tarkistat tuottamasti koodin ja ymmärrät
+ohjelmakoodin kehittämisessä, kunhan tarkistat tuotetun koodin ja ymmärrät
 mitä se tekee. Viikkotehtävissä kirjoitetaan annettujen ohjeiden mukainen lyhyt
 analyysi ja pohdinta omasta työstäsi. Oletamme, että laadit tämän itse
 omien ajatustesi pohjalta. Kurssiin kuuluu myös tenttejä, jotka

@@ -25,3 +25,7 @@
 - title: Koodiesimerkit
   url: /examples/
   icon: "fas fa-code"
+
+- title: Projektin tavoitteet
+  url: /fi/project/
+  icon: "fas fa-bullseye"

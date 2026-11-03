@@ -39,6 +39,9 @@ The course material contains the following sections:
 1. [Security](security/)
 1. [UDP and real-time transport](udp/)
 
+There is a **[separate page](project/)** describing project goals and evaluation
+criteria.
+
 **About the use of AI**: On this course there are no restrictions to using AI
 tools for developing the program code, as long as you make sure to review and
 understand what you are doing. In the weekly assignments you will write up a
