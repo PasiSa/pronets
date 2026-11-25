@@ -46,11 +46,11 @@ the following parts:
   in `main.rs`.
 - Formatting and naming conventions of functions and types should be clear and
   consistent. Note that rust has formatting tool that can help in this. You can
-  run it, for example, using cargo: `cargp fmt`.
+  run it, for example, using cargo: `cargo fmt`.
 
 ## Functionality (2)
 
-- The should no major bugs that prevent normal use and testimg of the client and
+- The should no major bugs that prevent normal use and testing of the client and
   server implementations.
 - Server should run robustly, even if there are errors and exceptional
   situations. The error handling should be appropriate and not cause
@@ -64,7 +64,7 @@ the following parts:
 
 ## Communication features (1)
 
-- TLS should be supprted for TCP connections. The projects do not need to use
+- TLS should be supported for TCP connections. The projects do not need to use
   TLS with UDP.
 - UDP protocol is used in some reasonable form in the project
 - The client and server implementations interoperate (and tested) with at least
@@ -72,6 +72,6 @@ the following parts:
   not need to cover all features, but at least some basic topic-specific
   features (basic objects on a whiteboard, or position updates om a car game).
 
-The evaluation is done in a holisitic way along the above categories: if the
+The evaluation is done in a holistic way along the above categories: if the
 project falls short on some of the mentioned criteria, it is possible to
 compensate by doing a comprehensive work on others.
